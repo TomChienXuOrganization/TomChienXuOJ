@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Manage Announcements{% endblock %}
+
+{% block body %}
+<div class="my-4">
+  <span class="fs-2">Create a new announcement</span>
+  <hr class="close">
+  <form method="POST" enctype="multipart/form-data">
+    <div class="mb-3 row form-group required">
+      <label class="col-sm-2 col-form-label control-label"><b>Announcement title:</b></label>
+      <div class="col-sm-10">
+        <textarea name="title" class="form-control" placeholder="Title..." rows="1" required></textarea>
+      </div>
+    </div>
+    <div class="mb-3 row form-group">
+      <label class="col-sm-2 col-form-label control-label"><b>Co-publishers:</b></label>
+      <div class="col-sm-10">
+        <textarea name="publishers" class="form-control" placeholder="Co-publishers..." rows="1"></textarea>
+      </div>
+    </div>
+    <div class="mb-3 row form-group required">
+      <label class="col-sm-2 col-form-label control-label"><b>Legend:</b></label>
+      <div class="col-sm-10">
+        <textarea name="announcement" class="form-control" placeholder="Announcement..." rows="15" required></textarea>
+      </div>
+    </div>
+    <div class="mb-3 text-end">
+      <input class="btn btn-outline-danger me-1" type="reset" value="Cancel">
+      <input class="btn btn-outline-success" type="submit" value="Submit">
+    </div>
+  </form>
+</div>
+{% endblock %}

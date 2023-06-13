@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Submission of {{ data["problem"]["problem_data"]["problem_name"] }}{% endblock %}
+
+{% block body %}
+<div class="my-4">
+  <h2 class="title">Submission of <a href="{{ url_for('user.problem_view', problem_code=data['problem']['problem_code']) }}">{{ data["problem"]["problem_data"]["problem_name"] }}</a> by {{ data["author"]["render_display"] | safe }}</h2>
+  <hr class="close">
+
+  <ul>
+    <li>Author: {{ data["author"]["render_display"] | safe }}</li>
+    <li>Problem: <b>{{ data["problem"]["problem_data"]["problem_name"] }}</b> ({{ data["problem"]["problem_code"] }})</li>
+    <li>Submitted at: <b>{{ data["submitted_at"] }}</b>
+    <li>Programming Language: <b>{{ data["language"].language_full_name }}</b></li>
+  </ul>
+
+  <h4 class="section-title"><b>Operator</b></h4>
+  <hr class="close">
+  <div class="operator mb-3">
+    <a class="btn btn-outline-primary" href="{{ url_for('user.home') }}">Click to go home</a>
+    <a class="btn btn-outline-primary ms-1" href="{{ url_for('user.problem_view', problem_code=data['problem']['problem_code']) }}">Click to see the problem again</a>
+    <a class="btn btn-outline-primary ms-1" href="{{ url_for('user.problem_submit', problem_code=data['problem']['problem_code']) }}">Click to resubmit</a>
+  </div>
+
+  <h4 class="section-title"><b>Submission</b></h4>
+  <hr class="close">
+  <pre class="code output"><code>{{ data["code"] }}</code></pre>
+
+  <h4 class="section-title"><b>Result</b></h4>
+  <hr class="close">
+  <ul class="no-bullets">
+    {% for batch in data["result"] %}
+      {% set parent_loop = loop %}
+      {% set more_than_one_batch = (data["result"] | length != 1) %}
+      {% if more_than_one_batch %}
+      <b>Batch #{{ parent_loop.index }}:</b>
+      <div class="ps-3 mb-1">
+      {% endif %}
+      {% for result in batch %}
+      <li>
+        <a data-bs-toggle="collapse" href="#batch_{{ parent_loop.index }}_{{ loop.index }}"><b>[Feedback]</b></a>
+        <b>Case #{{ loop.index }}:</b> 
+        {% if result["status_code"] == "AC" %}
+          <b><span class="text-success">Accepted (AC)</span></b> [{{ "%.5f" | format(result["time"]) }}s; {{ "%.5f" | format(result["memory"]) }} MB]
+        {% elif result["status_code"] == "WA" %}
+          <b><span class="text-danger">Wrong Answer (WA)</span></b> [{{ "%.5f" | format(result["time"]) }}s; {{ "%.5f" | format(result["memory"]) }} MB]
+        {% elif result["status_code"] == "TLE" %}
+          <b><span class="text-secondary">Time Limit Exceeded (TLE)</span></b> [>{{ "%.5f" | format(result["time"]) }}s; {{ "%.5f" | format(result["memory"]) }} MB]
+        {% elif result["status_code"] == "RTE" %}
+          <b><span class="text-danger">Runtime Error/Exception (RTE)</span></b>
+        {% elif result["status_code"] == "IR" %}
+          <b><span class="text-secondary">Invalid Return (IR)</span></b>
+        {% elif result["status_code"] == "MLE" %}
+          <b><span class="text-warning">Memory Limit Exceeded (MLE)</span></b>
+        {% elif result["status_code"] == "OLE" %}
+          <b><span class="text-warning">Output Limit Exceeded (OLE)</span></b>
+        {% else %}
+          <b><span class="text-warning">Internal Error (IE)</span></b>
+        {% endif %}
+        <div class="collapse" id="batch_{{ parent_loop.index }}_{{ loop.index }}">
+          <div class="bd-callout bd-callout-danger mb-2">
+            <ul class="no-bullets">
+              <li><b>Judge's feedback:</b> {{ result["feedback"] }}</li>
+              <li><b>Points received:</b> {{ result["point"] }}</li>
+            </ul>
+          </div>
+        </div>
+      </li>
+      {% endfor %}
+      {% if more_than_one_batch %}
+      </div>
+      {% endif %}
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,11 @@
+flask
+flask-login
+flask-socketio
+flask-wtf
+flask-mdeditor
+python-engineio
+python-socketio
+python-dotenv
+pytz
+python-yaml
+markdown2[all]

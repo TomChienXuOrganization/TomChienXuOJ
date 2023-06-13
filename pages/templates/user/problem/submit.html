@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Submit to {{ problem["problem_data"]["problem_name"] }}{% endblock %}
+
+{% block additional_styles %}
+<style type="text/css" media="screen">
+  .outer-editor {
+    position: relative;
+    width: 100%;
+    height: 50vh;
+    margin: auto;
+  }
+
+  #editor {
+    width: 100%;
+    height: 100%;
+    font-size: 15px;
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="submitting-section">
+  <h2>Submission to <a href='{{ url_for("user.problem_view", problem_code=problem["problem_code"]) }}'>({{ problem["problem_code"] }}) {{ problem["problem_data"]["problem_name"] }}</a>:</h2>
+  <hr class="close">
+  <div class="card">
+    <div class="card-body">
+      <span>Paste your code, choose the programming language and click <b>Submit</b> to create a submission:</span>
+      <br>
+      <p><i>*Not all submissions will be judged immediately due to high traffic or in rush hours, your submissions are submitted only when a judge is available! Please be patient, we will try our best to serve you guys, users, the best experience of practicing!</i></p>
+      <div class="outer-editor">
+        <div id="editor"></div>
+      </div>
+    </div>
+    <div class="card-footer text-body-secondary">
+      <div class="d-flex justify-content-between">
+        <form method="POST" id="submit-form">
+          <div class="language-select">
+            {{ form.hidden_tag() }}
+            {{ form.language(class="form-select") }}
+          </div>
+        </form>
+        <div class="submit">
+          <button id="submit-button" class="btn btn-primary">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block additional_scripts %}
+<script>
+  var editor = ace.edit("editor");
+  editor.setTheme("ace/theme/monokai");
+  editor.session.setMode("ace/mode/python");
+
+  $("button#submit-button").click(() => {
+    $("input[type='hidden']#code").val(editor.getValue());
+    $("form#submit-form").submit();
+  });
+</script>
+{% endblock %}

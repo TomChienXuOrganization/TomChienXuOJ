@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Version Matrix{% endblock %}
+
+{% block body %}
+<h2 class="mb-1">Version Matrix</h2>
+<hr class="close">
+<div class="table-responsive mb-3">
+  <table id="table-version" class="table">
+    <thead class="table-dark">
+      <tr class="sticky-top">
+        <th scope="col" class="col-auto text-center">#</th>
+        {% for language in (status.values() | list)[0].values() %}
+        <td scope="col" class="col-1 text-center language-name">{{ language["display_name"] }}</td>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for judge, runtime in status.items() %}
+      <tr>
+        <td scope="row" class="text-center border-top-0 judge-name">{{ judge["name"] }}</td>
+        {% for language in runtime.values() %}
+        {% if language['status'] %}
+        <td class="text-center text-dark border-top-0 available"><b>Working</b></td>
+        {% else %}
+        <td class="text-center text-dark border-top-0 unavailable"><b>Disabled</b></td>
+        {% endif %}
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

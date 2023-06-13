@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}{{ problem["problem_data"]["problem_name"] }}{% endblock %}
+{% block body %}
+<div class="problem-set">
+  <h2>{{ problem["problem_data"]["problem_name"] }}</h2>
+  <hr class="close">
+  <div class="row">
+    <div class="col-md-10">
+
+      <div class="legend">{{ problem["problem_data"]["problem_legend"] | safe }}</div>
+
+      <h4 class="section-title"><b>Input Specification</b></h4>
+      <hr class="close">
+      <div class="input-specification">{{ problem["problem_data"]["problem_input"] | safe }}</div>
+
+      <h4 class="section-title"><b>Output Specification</b></h4>
+      <hr class="close">
+      <div class="output-specification">{{ problem["problem_data"]["problem_output"] | safe }}</div>
+
+      <h4 class="section-title"><b>Example</b></h4>
+      <hr class="close">
+      {% for example in problem["problem_data"]["problem_examples"] %}
+
+      <div class="row">
+        <div class="col">
+          <p class="h5">Input #{{ loop.index }}:</p>
+          {{ example["input"] | safe }}
+        </div>
+        <div class="col">
+          <p class="h5">Output #{{ loop.index }}:</p>
+          {{ example["output"] | safe }}
+        </div>
+      </div>
+
+      {% if example["explanation"] %}
+      <p class="h5">Explanation:</p>
+      {{ example["explanation"] | safe }}
+      {% endif %}
+
+      {% if problem["problem_data"]["problem_examples"] | length != 1 and not loop.last %}
+      <hr class="close" style="width: 75%" size="2">
+      {% endif %}
+
+      {% endfor %}
+
+      <h4 class="section-title"><b>Clarification</b></h4>
+      <hr class="close">
+      <ul>
+        {% if problem["problem_data"]["problem_clarification"] %}
+        <li>{{ problem["problem_data"]["problem_clarification"] | safe }}</li>
+        {% else %}
+        <li>There are no clarifications which have been published!</li>
+        {% endif %}
+      </ul>
+
+      {% if problem["editorial"] %}
+      <h4 class="section-title"><b>Editorial</b></h4>
+      <hr class="close">
+      <div class="accordion mb-3 editorial-comprehension">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button id="editorial" class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#editorial-spoiler">
+              Click me to view the editorial!
+            </button>
+          </h2>
+          <div id="editorial-spoiler" class="accordion-collapse collapse" data-bs-parent="#editorial">
+            <div class="accordion-body">{{ problem["editorial"] | safe }}</div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if problem["problem_data"]["problem_source"] %}
+      <h4 class="section-title"><b>Source</b></h4>
+      <hr class="close">
+      {{ problem["problem_data"]["problem_source"] | safe }}
+      {% endif %}
+
+    </div>
+
+    <div class="col" style="z-index: 0;">
+      <div class="sticky-top information-column">
+        <div class="d-grid">
+          <a href='{{ url_for("user.problem_submit", problem_code=problem["problem_code"]) }}' class="btn btn-primary submit-btn">Submit</a>
+        </div>
+        <hr class="close-divider">
+        <a href="#" class="text-decoration-none">All submissions</a>
+        <br>
+        <a href="#" class="text-decoration-none">My submissions</a>
+        <hr class="close-divider">
+        {% if user.is_authenticated and user.role_id in [2] %}
+        <a href={{ url_for("user.home", id=problem["id"]) }} class="text-decoration-none">Edit problem</a>
+        <hr class="close-divider">
+        {% endif %}
+        <table>
+          <tbody>
+            <tr>
+              <th scope="row"><i class="bi bi-clock-fill"></i> Time limit:</th>
+              <td class="ps-2">{{ problem["time_limit"] }}s</td>
+            </tr>
+            <tr>
+              <th scope="row"><i class="bi bi-file-earmark-diff-fill"></i> Memory limit:</th>
+              <td class="ps-2">{{ problem["memory_limit"] }} Mb</td>
+            </tr>
+            <tr>
+              <th scope="row"><i class="bi bi-hdmi-fill"></i> Input:</th>
+              <td class="ps-2">stdin</td>
+            </tr>
+            <tr>
+              <th scope="row"><i class="bi bi-printer-fill"></i> Output:</th>
+              <td class="ps-2">stdout</td>
+            </tr>
+            <tr>
+              <th scope="row"><i class="bi bi-broadcast-pin"></i> Score:</th>
+              <td class="ps-2">{{ problem["points"] }} ({{ problem["problem_data"]["problem_judging_type"] }})</td>
+            </tr>
+          </tbody>
+        </table>
+        <hr class="close-divider">
+
+        <span><i class="bi bi-hdd-stack-fill"></i> <b>Languages:</b></span>
+        <ul>
+          <li>Python 3.7 (3.10)</li>
+          <li>C++ 14 (20)</li>
+        </ul>
+
+        <span><i class="bi bi-pen-fill"></i> <b>Author:</b></span>
+        <ul>
+          <li>{{ problem["author"].render_display | safe }}</li>
+        </ul>
+
+        {% if problem["problem_data"]["publishers"] %}
+        <span><i class="bi bi-pen-fill"></i> <b>Publishers:</b></span>
+        <ul>
+          {% for publisher in problem["problem_data"]["publishers"] %}
+          <li>{{ publisher.render_display | safe }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if problem["problem_data"]["publishers"] %}
+        <span><i class="bi bi-pen-fill"></i> <b>Testers:</b></span>
+        <ul>
+          {% for tester in problem["problem_data"]["testers"] %}
+          <li>{{ tester.render_display | safe }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
