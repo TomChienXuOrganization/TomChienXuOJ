@@ -2,6 +2,7 @@ flask
 flask-login
 flask-socketio
 flask-wtf
+flask-sqlalchemy
 flask-mdeditor
 python-engineio
 python-socketio
