@@ -158,10 +158,7 @@ class JudgeProcess:
         return JudgeResult(False, "Unidentified Exception", "IR", 9999, 9999, "\n".join(traceback.format_exception(error)), 0, "(This can be judge's exception, may be not yours! You can create a ticket to be able to view this submission) We actually don't know why this happened tho! ¯\_(ツ)_/¯")
 
   def single_judge(self, input_file_name: str, output_file_name: str, accepted_point: Union[float, int] = 0.1, timeout: Union[float, int] = 1.0) -> JudgeResult:
-    with (
-      open(f"{PROBLEM_TESTCASE_ROOT_STORAGE}/{self.problem_code}/{input_file_name}", "r", encoding="utf-8") as input_,
-      open(f"{PROBLEM_TESTCASE_ROOT_STORAGE}/{self.problem_code}/{output_file_name}", "r", encoding="utf-8") as output_
-    ):
+    with open(f"{PROBLEM_TESTCASE_ROOT_STORAGE}/{self.problem_code}/{input_file_name}", "r", encoding="utf-8") as input_, open(f"{PROBLEM_TESTCASE_ROOT_STORAGE}/{self.problem_code}/{output_file_name}", "r", encoding="utf-8") as output_:
       input_, output_ = input_.read(), output_.read()
 
     result = self.process(input_, output_, accepted_point, timeout)
