@@ -2,7 +2,6 @@ import os
 import threading
 import traceback
 import sys
-import waitress
 from typing import Any
 from constants import *
 from pages import app
