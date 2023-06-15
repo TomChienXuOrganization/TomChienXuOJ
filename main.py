@@ -20,7 +20,8 @@ sys.excepthook = TomChienXuOJ_crash_exception_traceback_handler
 sys.dont_write_bytecode = True
 
 def run_application(debug: bool = False) -> None:
-  app.run(host="0.0.0.0", port=443, debug=debug, ssl_context=("server.pem", "server-key.pem"))
+  # app.run(host="0.0.0.0", port=443, debug=debug, ssl_context=("server.pem", "server-key.pem"))
+  app.run(host="0.0.0.0", port=8080, debug=debug)
 
 def run_server() -> None:
   server = threading.Thread(target=run_application)
