@@ -1,0 +1,23 @@
+# List created by giaosus
+- đéo làm j cả ✅
+- Làm lại trang chủ ✅,Hiển thị contest sắp tới, contest đang diễn ra ❌,Tin tức ✅
+- Admin control panel ✅, dashboard (tong so thanh vien, tong so bai, tong so contest,tong so lan nop, % cpu/ram ,....)
+- Chỉ xem đc lời giải và code người khác khi đã AC bài đó (khi bài đấy cho phép xem code của người khác)(hoặc là chỉ có admin và head admin xem đc code của mọi người) 
+- Tạo problem ✅, tạo contest(contest ko rating và contest rating abcdef)(ACM,OI)
+- Tính rating, rank rating, tất cả các user đều có màu của rank
+- Lời giải, tác giả,nguồn,dgdkhgdhdg ✅
+- Các bài tập nổi bật 
+- Tìm kiếm bài tập (theo điểm,nhóm bài,ngau nhien,....síkagjdg)
+- rank chung abcdef ✅
+- pròile(Lưu lại những bài đã AC,chưa AC,Làm bài được cộng điểm,quên mật khẩu,Lịch sử rating, chinh sua profile, danh sach bai nop cua minh, ඞ )
+- editẻ, hỗ trợ in đậm, in nghiên,slglkdsgjkldnklgmsdg
+- bình luận utteranc.es ,điểm đóng góp, đánh giá bài tập
+- một trang sub rieng ✅, tat nut sub tranh abcd cham vkl ✅, hien vong load luc sub lau de biet la co phan hoi ✅
+- xac minh email
+- ban ip
+- all, my submissions
+- chinh dảk mode ඞ
+- gioi han chu trong output submissions
+- cho xem 69420 tét tuy theo tung bai (contest ko duoc xem chit ඞ)
+- nhieu ngon ngu (tieng viet, tieng nguoi, tieng cho, tieng suc vat, tieng anh, tieng ඞ)
+$\LaTeX abc$
