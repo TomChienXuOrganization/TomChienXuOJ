@@ -13,11 +13,16 @@
 - editẻ, hỗ trợ in đậm, in nghiên,slglkdsgjkldnklgmsdg
 - bình luận utteranc.es ,điểm đóng góp, đánh giá bài tập
 - một trang sub rieng ✅, tat nut sub tranh abcd cham vkl ✅, hien vong load luc sub lau de biet la co phan hoi ✅
-- xac minh email
+- xac minh email ✅
 - ban ip
 - all, my submissions
 - chinh dảk mode ඞ
 - gioi han chu trong output submissions
 - cho xem 69420 tét tuy theo tung bai (contest ko duoc xem chit ඞ)
 - nhieu ngon ngu (tieng viet, tieng nguoi, tieng cho, tieng suc vat, tieng anh, tieng ඞ)
+- moss siu cap dep trai
+- rejudge
+- view as pdf
+- pretest
+- 
 $\LaTeX abc$
