@@ -24,5 +24,6 @@
 - rejudge
 - view as pdf
 - pretest
-- 
+- reset password page
+- rejudge cac kieu
 $\LaTeX abc$
