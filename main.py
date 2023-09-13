@@ -1,9 +1,8 @@
 import os
-import threading
 import traceback
 import sys
 from typing import Any
-from constants import *
+from settings import *
 from pages import app
 
 def TomChienXuOJ_crash_exception_traceback_handler(__exception_type, __base_exception, __traceback_type) -> Any:
@@ -16,17 +15,10 @@ def TomChienXuOJ_crash_exception_traceback_handler(__exception_type, __base_exce
   print("".join(exception.format()), file=sys.stderr)
 
 sys.excepthook = TomChienXuOJ_crash_exception_traceback_handler
-sys.dont_write_bytecode = True
+sys.dont_write_bytecode = False
 
-def run_application(debug: bool = False) -> None:
-  # app.run(host="0.0.0.0", port=443, debug=debug, ssl_context=("server.pem", "server-key.pem"))
-  app.run(host="0.0.0.0", port=8080, debug=debug)
-
-def run_server() -> None:
-  server = threading.Thread(target=run_application)
-  server.start()
-  waitress.serve(app, host="0.0.0.0", port=443, url_scheme="https")
+def run_application() -> None:
+  app.run(host=DOMAIN, port=PORT, debug=DEBUG_STATUS, ssl_context=SSL_CONTEXT if USE_SSL_CONTEXT_ON_MAIN_SERVER else None)
 
 if __name__ == "__main__":
-  run_application(True)
-  # run_server()
+  run_application()

@@ -1,43 +1,44 @@
+from . import TomChienXuOJ_SupportDefaultItems
 from pages import database
-from json import dumps
 
-class Role(database.Model):
-  id = database.Column(database.Integer, primary_key=True, unique=True, nullable=False)
+Role_Permission = database.Table(
+  "re_role_permission",
+  database.Column("role_id", database.Integer, database.ForeignKey("role.id")),
+  database.Column("permission_id", database.Integer, database.ForeignKey("permission.id"))
+)
+
+class Role(database.Model, TomChienXuOJ_SupportDefaultItems):
+  id = database.Column(database.Integer, primary_key=True, unique=True)
   name = database.Column(database.String, unique=True, nullable=False)
-  display = database.Column(database.String, nullable=False)
-  color = database.Column(database.String, nullable=False)
-  permissions = database.Column(database.String, nullable=False, server_default="{}")
+  display = database.Column(database.String)
+  color = database.Column(database.String)
 
-  users_who_have_this_role = database.relationship("User", backref="role")
+  permission = database.relationship("Permission", backref="role_has_this_permission", secondary=Role_Permission)
+  user_who_has_this_role = database.relationship("User", backref="role")
 
-  @staticmethod
-  def initialize_default_roles() -> None:
-    initialize_roles = {
-      "User": {
-        "name": "User",
-        "display": "$username$",
-        "color": "#1b1b1b",
-        "permissions": dumps({"admin_permission_bypass": False}, ensure_ascii=True, sort_keys=True)
-      },
-      "Admin": {
-        "name": "Admin",
-        "display": "🔥 $username$",
-        "color": "#d0312d",
-        "permissions": dumps({"admin_permission_bypass": True}, ensure_ascii=True, sort_keys=True)
-      }
-    }
-    for _, role in initialize_roles.items():
-      if not Role.query.filter_by(name=role.get("name")).first():
-        new_role = Role(**role)
-        database.session.add(new_role)
-        database.session.commit()
+  def __repr__(self):
+    return f"{self.id}: {self.name}"
 
-def first_time_initialization() -> None:
-  role_data = Role.query.all()
-  if not role_data:
-    Role.initialize_default_roles()
-    print("""=======================================
+  def check(self, permission_name: str) -> bool:
+    return permission_name in [permission.name for permission in self.permission]
 
->> When the first time initializing is finished, please (optional, but we recommend it) restart the application :D
+  default_item_headers = ["name", "display", "color"]
+  default_items = [
+    ["User", "$username$", "#1b1b1b"],
+    ["Admin", "🔥 $username$", "#d0312d"]
+  ]
 
-=======================================""")
+class Permission(database.Model, TomChienXuOJ_SupportDefaultItems):
+  id = database.Column(database.Integer, primary_key=True, unique=True)
+  name = database.Column(database.String, unique=True, nullable=False)
+  description = database.Column(database.Text)
+
+  def __repr__(self):
+    return f"{self.id}: {self.name}"
+
+  default_item_headers = ["name", "description"]
+  default_items = [
+    ["ADMIN", "Admin access granted: Be able to do everything on site."],
+    ["VIEW_PRIVATE_ANNOUNCEMENTS", "Be able to view all announcements which have been created (even private ones)."],
+    ["VIEW_PRIVATE_PROBLEMS", "Be able to view all problems which have been created (even private ones)."]
+  ]

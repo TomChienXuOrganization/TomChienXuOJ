@@ -1,7 +1,7 @@
 class JudgeResult:
   def __init__(self, accepted_or_not: bool, return_result: str, status_code: str, time: float, memory: int, standard_error_result: str = "", point: float = 0, feedback: str = "") -> None:
     self.accepted_or_not: bool = accepted_or_not
-    self.return_result: str = return_result
+    self.return_result: str = return_result[:20]
     self.status_code: str = status_code
     self.standard_error_result: str = standard_error_result
     self.point: float = point
