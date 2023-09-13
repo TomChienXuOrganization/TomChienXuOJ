@@ -1,75 +1,105 @@
 {% extends "base.html" %}
-{% block title %}Submission of {{ data["problem"]["problem_data"]["problem_name"] }}{% endblock %}
+{% block title %}Submission of {{ submission.problem.problem_name }}{% endblock %}
 
-{% block body %}
-<div class="my-4">
-  <h2 class="title">Submission of <a href="{{ url_for('user.problem_view', problem_code=data['problem']['problem_code']) }}">{{ data["problem"]["problem_data"]["problem_name"] }}</a> by {{ data["author"]["render_display"] | safe }}</h2>
+{% macro render_result(data) -%}
+  {% set banner_color = {"AC": "success", "WA": "danger", "TLE": "secondary", "RTE": "warning", "IR": "warning", "MLE": "warning", "OLE": "danger", "IE": "danger"} %}
+  {% for batch in data %}
+    {% set parent_loop = loop %}
+    {% set more_than_one_batch = (data | length != 1) %}
+    {% if more_than_one_batch %}
+    <b>Batch #{{ parent_loop.index }}:</b>
+    {% endif %}
+    {% for result in batch %}
+    <li class="ps-3">
+      <a data-bs-toggle="collapse" href="#batch_{{ parent_loop.index }}_{{ loop.index }}"><b>[Feedback]</b></a>
+      <b>Case #{{ loop.index }}:</b> 
+      {% if result.status_code == "AC" %}
+        <b><span class="text-{{ banner_color[result.status_code] }}">Accepted (AC)</span></b> [{{ "%.2f" | format(result.time) }}s; {{ "%.2f" | format(result.memory) }} MB]
+      {% elif result.status_code == "WA" %}
+        <b><span class="text-{{ banner_color[result.status_code] }}">Wrong Answer (WA)</span></b> [{{ "%.2f" | format(result.time) }}s; {{ "%.2f" | format(result.memory) }} MB]
+      {% elif result.status_code == "TLE" %}
+        <b><span class="text-{{ banner_color[result.status_code] }}">Time Limit Exceeded (TLE)</span></b> [>{{ "%.2f" | format(result.time) }}s; {{ "%.2f" | format(result.memory) }} MB]
+      {% elif result.status_code == "RTE" %}
+        <b><span class="text-{{ banner_color[result.status_code] }}">Runtime Error/Exception (RTE)</span></b>
+      {% elif result.status_code == "IR" %}
+        <b><span class="text-{{ banner_color[result.status_code] }}">Invalid Return (IR)</span></b>
+      {% elif result.status_code == "MLE" %}
+        <b><span class="text-{{ banner_color[result.status_code] }}">Memory Limit Exceeded (MLE)</span></b>
+      {% elif result.status_code == "OLE" %}
+        <b><span class="text-{{ banner_color[result.status_code] }}">Output Limit Exceeded (OLE)</span></b>
+      {% else %}
+        <b><span class="text-{{ banner_color[result.status_code] }}">Internal Error (IE)</span></b>
+      {% endif %}
+      <div class="collapse" id="batch_{{ parent_loop.index }}_{{ loop.index }}">
+        <div class="bd-callout bd-callout-{{ banner_color[result.status_code] }} mb-2">
+          <ul class="no-bullets">
+            <li><b>Judge's feedback:</b> {{ result.feedback | safe }}</li>
+            <li><b>Points received:</b> {{ result.point }}</li>
+            {% if result.standard_error_result %}
+            <li><b>Standard error:</b>
+              <pre><code>{{ result.standard_error_result | safe }}</code></pre>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </li>
+    {% endfor %}
+  {% endfor %}
+{%- endmacro %}
+
+{% block view_page_body %}
+<input type="hidden" id="submission-authentication" value="{{ submission.submission_authentication }}">
+<div>
+  <h2 class="title">Submission of <a href="{{ url_for('user_view.problem_view', problem_code=submission.problem.problem_code) }}">{{ submission.problem.problem_name }}</a> by {{ submission.author.render_display | safe }}</h2>
   <hr class="close">
 
   <ul>
-    <li>Author: {{ data["author"]["render_display"] | safe }}</li>
-    <li>Problem: <b>{{ data["problem"]["problem_data"]["problem_name"] }}</b> ({{ data["problem"]["problem_code"] }})</li>
-    <li>Submitted at: <b>{{ data["submitted_at"] }}</b>
-    <li>Programming Language: <b>{{ data["language"].language_full_name }}</b></li>
+    <li>Author: {{ submission.author.render_display | safe }}</li>
+    <li>Problem: <b>{{ submission.problem.problem_name }}</b> ({{ submission.problem.problem_code }})</li>
+    <li>Submitted At: <b>{{ submission.time_timezone }}</b>
+    <li>Programming Language: <b>{{ submission.programming_language.language_full_name }}</b></li>
+    <li>Judged By: <b>{{ submission.judge.name }}</b></li>
   </ul>
 
   <h4 class="section-title"><b>Operator</b></h4>
   <hr class="close">
   <div class="operator mb-3">
-    <a class="btn btn-outline-primary" href="{{ url_for('user.home') }}">Click to go home</a>
-    <a class="btn btn-outline-primary ms-1" href="{{ url_for('user.problem_view', problem_code=data['problem']['problem_code']) }}">Click to see the problem again</a>
-    <a class="btn btn-outline-primary ms-1" href="{{ url_for('user.problem_submit', problem_code=data['problem']['problem_code']) }}">Click to resubmit</a>
+    <a class="btn btn-outline-primary" href="{{ url_for('user_view.home') }}">Click to go home</a>
+    <a class="btn btn-outline-primary ms-1" href="{{ url_for('user_view.problem_view', problem_code=submission.problem.problem_code) }}">Click to see the problem again</a>
+    <a class="btn btn-outline-primary ms-1" href="{{ url_for('user_view.problem_submit', problem_code=submission.problem.problem_code) }}">Click to resubmit</a>
+    {% if current_user.is_authenticated and current_user.role.check("ADMIN") %}
+      <button id="btn-rejudge" submission="{{ submission.id }}" class="btn btn-outline-warning ms-1">Click to rejudge</button>
+    {% endif %}
   </div>
 
   <h4 class="section-title"><b>Submission</b></h4>
   <hr class="close">
-  <pre class="code output"><code>{{ data["code"] }}</code></pre>
+  {{ submission.markdown_code | safe }}
 
   <h4 class="section-title"><b>Result</b></h4>
   <hr class="close">
-  <ul class="no-bullets">
-    {% for batch in data["result"] %}
-      {% set parent_loop = loop %}
-      {% set more_than_one_batch = (data["result"] | length != 1) %}
-      {% if more_than_one_batch %}
-      <b>Batch #{{ parent_loop.index }}:</b>
-      <div class="ps-3 mb-1">
-      {% endif %}
-      {% for result in batch %}
-      <li>
-        <a data-bs-toggle="collapse" href="#batch_{{ parent_loop.index }}_{{ loop.index }}"><b>[Feedback]</b></a>
-        <b>Case #{{ loop.index }}:</b> 
-        {% if result["status_code"] == "AC" %}
-          <b><span class="text-success">Accepted (AC)</span></b> [{{ "%.5f" | format(result["time"]) }}s; {{ "%.5f" | format(result["memory"]) }} MB]
-        {% elif result["status_code"] == "WA" %}
-          <b><span class="text-danger">Wrong Answer (WA)</span></b> [{{ "%.5f" | format(result["time"]) }}s; {{ "%.5f" | format(result["memory"]) }} MB]
-        {% elif result["status_code"] == "TLE" %}
-          <b><span class="text-secondary">Time Limit Exceeded (TLE)</span></b> [>{{ "%.5f" | format(result["time"]) }}s; {{ "%.5f" | format(result["memory"]) }} MB]
-        {% elif result["status_code"] == "RTE" %}
-          <b><span class="text-danger">Runtime Error/Exception (RTE)</span></b>
-        {% elif result["status_code"] == "IR" %}
-          <b><span class="text-secondary">Invalid Return (IR)</span></b>
-        {% elif result["status_code"] == "MLE" %}
-          <b><span class="text-warning">Memory Limit Exceeded (MLE)</span></b>
-        {% elif result["status_code"] == "OLE" %}
-          <b><span class="text-warning">Output Limit Exceeded (OLE)</span></b>
-        {% else %}
-          <b><span class="text-warning">Internal Error (IE)</span></b>
-        {% endif %}
-        <div class="collapse" id="batch_{{ parent_loop.index }}_{{ loop.index }}">
-          <div class="bd-callout bd-callout-danger mb-2">
-            <ul class="no-bullets">
-              <li><b>Judge's feedback:</b> {{ result["feedback"] }}</li>
-              <li><b>Points received:</b> {{ result["point"] }}</li>
-            </ul>
-          </div>
-        </div>
-      </li>
-      {% endfor %}
-      {% if more_than_one_batch %}
-      </div>
-      {% endif %}
-    {% endfor %}
+  <ul class="no-bullets" id="result-section">
+    {{ render_result(submission.result) }}
+  </ul>
+
+  <br>
+  <h4 class="section-title"><b>Debug</b></h4>
+  <hr class="close">
+  <ul>
+    <li>Submission Authentication: <b>{{ submission.submission_authentication }}</b></li>
+    <li>Judge Authentication: <b>{{ submission.judge_authentication }}</b></li>
   </ul>
 </div>
+{% endblock %}
+
+{% block additional_scripts %}
+<script src="/static/js/submission.js"></script>
+<script src="/static/js/rejudge.js"></script>
+<script>
+  const element = document.querySelector("button#btn-rejudge")
+  element.addEventListener("click", () => {
+    rejudge(parseInt(element.getAttribute("submission")));
+  });
+</script>
 {% endblock %}

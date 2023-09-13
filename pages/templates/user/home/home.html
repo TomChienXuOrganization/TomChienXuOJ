@@ -1,11 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Home{% endblock %}
 
-{% block body %}
-<h2 class="mb-1">Homepage</h2>
-<hr class="close">
+{% block view_page_body %}
+{{ header("Homepage") }}
 <div class="row">
-  <div class="col-xxl-9">
+  <div class="col-lg-9">
     <div class="card mb-3">
       <div class="card-header bg-dark">
         <span class="title">NEWSFEED</span>
@@ -13,11 +12,11 @@
       <div class="card-body pb-0">
         {% if announcements | length > 0 %}
         {% for announcement in announcements %}
-        <a href="{{ url_for('user.home', id=announcement.id) }}" class="h4 link text-decoration-none text-break">
-          {{ announcement.title }}
+        <a href="{{ url_for('user_view.home', id=announcement.id) }}" class="link text-decoration-none text-break">
+          <span class="h4">{{ announcement.title }}</span>
         </a>
         <div>
-          <span>Posted by {{ announcement.author.render_display | safe }}, at <b>{{ announcement.time }}</b>.</span>
+          <span>Posted by {{ announcement.author.render_display | safe }}, at <b>{{ announcement.time_timezone }}</b>.</span>
           <p class="text-danger">{% if not announcement.visibility %}*This announcement is not publicly published!{% endif %}</p>
         </div>
         <p class="mb-0 card-text">
@@ -32,7 +31,7 @@
             <i class="bi bi-people-fill"></i> Publishers: {{ announcement.author.render_display | safe }}
           </div>
           <div>
-            <i class="bi bi-clock-fill"></i> {{ announcement.time }} (<span class="time-from-now" since='{{ announcement.time }}'></span>)
+            <i class="bi bi-clock-fill"></i> {{ announcement.time_timezone }} (<span class="time-from-now" since="{{ announcement.time_timezone }}"></span>)
           </div>
         </div>
         {% endfor %}
@@ -49,68 +48,17 @@
       </div>
     </div>
   </div>
-  <div class="col-xxl-3">
+  <div class="col-lg-3">
     <div class="card mb-3">
       <div class="card-header bg-dark text-center">
         <span class="title">EVENTS</span>
       </div>
       <div class="card-body text-center p-0">
         <div class="event m-0 py-4 border border-start-0 border-end-0 border-bottom-0">
-          <a class="h5 card-title" href="https://beta.epicoj.ml/contests/tcpp_chethapcam1">Chè thập cẩm của Together CPP</a>
-          <p class="card-text text-muted">Starts in 0 days 01:11:03</p>
+          <a class="link" href="{{ url_for('user_view.contest_view', contest_code='ntmkoi_2022_remake') }}"><span class="h5">NTMKOI 2022 Remake</span></a>
+          <p class="card-text text-muted">Biết gì về toán?</p>
         </div>
       </div>
-    </div>
-    <div class="table-responsive mb-3">
-      <table class="table table-striped table-hover table-bordered">
-        <thead class="table-dark">
-          <tr>
-            <th colspan="4">SHRIMPS OF THE YEAR</th>
-          </tr>
-          <tr>
-            <th colspan="4">BIG-BRAIN CONFIRMATION</th>
-          </tr>
-          <tr>
-            <th scope="col" class="col-md-auto text-center">#</th>
-            <th scope="col" class="col-md-6 text-center">Username</th>
-            <th scope="col" class="col-md-3 text-center">Rating</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td scope="row" class="text-center"><b>1</b></td>
-            <td>AduAngTunaa</td>
-            <td class="text-center"><b>69</b></td>
-          </tr>
-          <tr>
-            <td scope="row" class="text-center"><b>2</b></td>
-            <td>giaosus</td>
-            <td class="text-center"><b>1</b></td>
-          </tr>
-        </tbody>
-        <thead class="table-dark">
-          <tr>
-            <th colspan="4">SUPPORTIVE SHRIMPS</th>
-          </tr>
-          <tr>
-            <th scope="col" class="col-md-auto text-center">#</th>
-            <th scope="col" class="col-md-6 text-center">Username</th>
-            <th scope="col" class="col-md-3 text-center">Contributions</th>
-          </tr>
-        </tbody>
-        </thead>
-          <tr>
-            <td scope="row" class="text-center"><b>1</b></td>
-            <td>afcaefeaf</td>
-            <td class="text-center"><b>23451</b></td>
-          </tr>
-          <tr>
-            <td scope="row" class="text-center"><b>2</b></td>
-            <td>giaosus</td>
-            <td class="text-center"><b>1</b></td>
-          </tr>
-        </tbody>
-      </table>
     </div>
   </div>
 </div>

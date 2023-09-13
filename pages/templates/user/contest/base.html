@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}{{ contest.contest_name }}{% endblock %}
+{% block additional_styles %}
+<link rel="stylesheet" href="/static/css/contest.css">
+{% endblock %}
+{% block view_page_body %}
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="starting-toast" class="toast">
+    <div class="toast-header">
+      <strong class="me-auto">Contest is starting!</strong>
+      <small>Right now!</small>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body">
+      The contest has begun, reloaded the page.
+      <br>
+      Problems are now published to everyone!
+    </div>
+  </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="ending-toast" class="toast">
+    <div class="toast-header">
+      <strong class="me-auto">Contest is ending!</strong>
+      <small>Right now!</small>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body">
+      The contest has ended, reloaded the page.
+      <br>
+      Participants will not be able to submit after this moment! Any external or late submission will not be counted in the contest leaderboard!
+    </div>
+  </div>
+</div>
+
+<div>
+  <ul class="nav nav-tabs justify-content-between contest-navbar">
+    <div class="title-bar">
+      <h2 class="m-0">{{ contest.contest_name }}</h2>
+    </div>
+    <div class="nav navigation-bar">
+      <li class="nav-item">
+        <a href="#" id="information" class="nav-link text-muted border-bottom"><i class="bi bi-info-square-fill"></i> Information</a>
+      </li>
+      <li class="nav-item">
+        <a href="#" id="leaderboard" class="nav-link text-muted border-bottom disabled-before-contest"><i class="bi bi-bar-chart-line-fill"></i> Leaderboard</a>
+      </li>
+      <li class="nav-item">
+        <a href="#" id="statistics" class="nav-link text-muted border-bottom disabled-before-contest"><i class="bi bi-pie-chart-fill"></i> Statistics</a>
+      </li>
+      <li class="nav-item">
+        <a href="#" id="submissions" class="nav-link text-muted border-bottom disabled-before-contest"><i class="bi bi-calendar2-check-fill"></i> Submissions</a>
+      </li>
+    </div>
+  </ul>
+
+  <div class="text-center my-3">
+    <span class="d-none will-begin-remaining-span">The contest will begin in %day% days, %hour%:%minute%:%second%!</span>
+    <span class="d-none will-end-remaining-span">The contest will end in %day% days, %hour%:%minute%:%second%!</span>
+    <span class="d-none ended-span">The contest has ended.</span>
+    <span class="d-none begun-span">The contest has begun.</span>
+    <span class="fs-2 contest-timer">Pending...</span>
+    <br>
+    <span class="d-none window-time-span"><b>%day% days; %hour% hours; %minute% minutes; %second% seconds</b>, from <b>{{ contest.start_time_timezone }}</b> to <b>{{ contest.end_time_timezone }}</b></span>
+    <span class="text-muted window-time">Please wait a second for us to load data correctly.</span>
+  </div>
+  <div class="progress">
+    <div id="time-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" width="0%"></div>
+  </div>
+  {% block view_contest_body %}{% endblock %}
+</div>
+{% endblock %}
+
+{% block additional_scripts %}
+  {{ super() }}
+  <script src="/static/js/contest.js"></script>
+  <script>
+    initializeContestData("{{ contest.start_time | safe }}", "{{ contest.end_time | safe }}", "{{ url_for('user_view.contest_view', contest_code=contest.contest_code) }}");
+  </script>
+{% endblock %}

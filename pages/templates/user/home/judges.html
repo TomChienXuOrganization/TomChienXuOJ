@@ -1,16 +1,18 @@
 {% extends "base.html" %}
 {% block title %}Version Matrix{% endblock %}
 
-{% block body %}
-<h2 class="mb-1">Version Matrix</h2>
-<hr class="close">
+{% block view_page_body %}
+{{ header("Version matrix") }}
 <div class="table-responsive mb-3">
   <table id="table-version" class="table">
+    {% if status %}
     <thead class="table-dark">
-      <tr class="sticky-top">
-        <th scope="col" class="col-auto text-center">#</th>
-        {% for language in (status.values() | list)[0].values() %}
-        <td scope="col" class="col-1 text-center language-name">{{ language["display_name"] }}</td>
+      <tr>
+        <th scope="col" class="col-auto">Judge's Name</th>
+        <th scope="col" class="col-1">Realtime Update Supported</th>
+        <th scope="col" class="col-2 text-center">Public Authentication</th>
+        {% for language, display_name in languages.items() %}
+        <td scope="col" class="col-1 language-name text-center">{{ display_name }}</td>
         {% endfor %}
       </tr>
     </thead>
@@ -18,16 +20,27 @@
       {% for judge, runtime in status.items() %}
       <tr>
         <td scope="row" class="text-center border-top-0 judge-name">{{ judge["name"] }}</td>
-        {% for language in runtime.values() %}
-        {% if language['status'] %}
-        <td class="text-center text-dark border-top-0 available"><b>Working</b></td>
+        <td scope="row" class="text-center border-top-0">{{ tick(judge["socket_supported"]) }}</td>
+        <td scope="row" class="text-center border-top-0">{{ judge["authentication"] }}</td>
+        {% for language in languages %}
+        {% if language in runtime %}
+          {% if runtime.get(language).status %}
+          <td class="text-center text-dark border-top-0 bg-success-subtle text-emphasis-success"><b>Working</b></td>
+          {% else %}
+          <td class="text-center text-dark border-top-0 bg-danger-subtle text-emphasis-danger"><b>Disabled</b></td>
+          {% endif %}
         {% else %}
-        <td class="text-center text-dark border-top-0 unavailable"><b>Disabled</b></td>
+        <td class="text-center text-dark border-top-0 bg-warning-subtle text-emphasis-warning"><b>Not Supported</b></td>
         {% endif %}
         {% endfor %}
       </tr>
       {% endfor %}
     </tbody>
+    {% else %}
+    <div class="alert alert-danger" role="alert">
+      There are no judges running! If you believe this is an error, contact the owner, administrators or moderators to resolve the problem!
+    </div>
+    {% endif %}
   </table>
 </div>
 {% endblock %}

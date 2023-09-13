@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from "helper/pagination.html" import render_pagination %}
+{% block title %}User List{% endblock %}
+
+{% block view_page_body %}
+{{ header("List of users") }}
+{% if users.items %}
+{{ render_pagination(users, "user_view.user_list") }}
+<div class="table-responsive">
+  <table class="table-sm table-striped table table-hover table-bordered">
+    <tbody>
+      <thead class="table-dark">
+        <tr>
+          <tr>
+            <th scope="col" class="col-md text-center">#</th>
+            <th scope="col" class="col-md text-center">ID</th>
+            <th scope="col" class="col-md-4">Name</th>
+            <th scope="col" class="col-md-2">Raw Username</th>
+            <th scope="col" class="col-md-3">Email</th>
+            <th scope="col" class="col-md-2">Role</th>
+            <th scope="col" class="col-md text-center">Admin</th>
+            <th scope="col" class="col-md text-center">Activation</th>
+          </tr>
+        </tr>
+      </thead>
+      {% for user in users %}
+      <tr>
+        <td class="align-middle text-center">{{ loop.index }}</td>
+        <td class="align-middle text-center">{{ user.id }}</td>
+        <td class="align-middle"><a href="{{ url_for('user_view.problem_view', problem_code='dinhcao_viethoangpopping') }}">{{ user.render_display | safe }}</a></td>
+        <td class="align-middle">{{ user.username }}</td>
+        <td class="align-middle">{{ user.email }}</td>
+        <td class="align-middle">{{ user.role.name }}</td>
+        <td class="align-middle text-center">{{ tick(user.role.check("ADMIN")) }}</td>
+        <td class="align-middle text-center">{{ tick(user.activation) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ render_pagination(users, "user_view.user_list") }}
+{% else %}
+<div class="alert alert-warning" role="alert">
+  There are no user which registered account on platform.
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Activated Unsuccessfully{% endblock %}
+{% block view_page_body %}
+{{ header("Your account is still not activated!") }}
+<p>
+  There are no activation statuses matching your provided data. This verification link was whether expired or didn't exist!
+</p>
+
+<div class="alert alert-danger" role="alert">
+  If you believe this is an error, contact the owner, administrators or moderators to resolve the problem!
+</div>
+{% endblock %}

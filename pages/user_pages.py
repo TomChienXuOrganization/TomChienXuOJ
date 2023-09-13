@@ -1,61 +1,79 @@
 from __future__ import annotations
-from datetime import datetime
-import flask
+import re
+import zipfile
+import smtplib
+import ssl
+import dotenv
+import os
 import flask_login
-import importlib
+from flask import abort
+from flask import url_for
+from flask import jsonify
+from flask import Blueprint
+from flask_login import current_user
+from flask_login import login_required
+from email.message import EmailMessage
+from email.mime.text import MIMEText
 from sqlalchemy import desc
+from sqlalchemy.sql import expression
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
+from werkzeug.utils import secure_filename
 from json import loads
 from json import dumps
-from . import default_keyword_arguments as d_kwargs
+from threading import Thread
 from . import markdown
-from . import ErrorPage
 from . import global_OJ_judge
+from . import global_OJ_judges
 from . import database
+from . import TomChienXuOJ_render_template as render_template
+from . import TomChienXuOJ_redirect as redirect
+from . import app
 from database_models import User
+from database_models import UserProfile
+from database_models import UserActivationStatus
 from database_models import Announcement
+from database_models import Problem
+from database_models import Contest
+from database_models import Contest_Problem
+from database_models import Judge
+from database_models import ProgrammingLanguage
+from database_models import Submission
 from forms import LoginForm
 from forms import SignupForm
 from forms import ProblemSubmitForm
-from constants import LANGUAGE_EXECUTOR_ROOT_STORAGE
+from forms import UploadCaseForm
+from forms import UploadCustomChecker
+from uuid import uuid4
+from settings import MAX_NUMBER_OF_SUBMISSIONS_PER_USER
+from settings import PROBLEM_TESTCASE_ROOT_STORAGE
+from settings import ACTIVATION_EMAIL_SENDER
+from settings import FULL_DOMAIN_WITH_SCHEME
+from settings import SMTP_PORT
+from settings import SMTP_SENDING_SERVER
+from settings import SEND_ACTIVATION_EMAIL
+from helpers import *
 
-main_blueprint = flask.Blueprint("user", __name__)
+dotenv.load_dotenv()
 
-db_con = None
-Problem = None
+main_blueprint = Blueprint("user_view", __name__)
 
-@main_blueprint.route("/a", methods=["GET", "POST"])
-@flask_login.login_required
-def a():
-  if flask.request.method == "POST":
-    title = flask.request.form.get("title")
-    announcement = flask.request.form.get("announcement")
-    author = flask_login.current_user.id
-
-    new_announcement = Announcement(author=author, title=title, announcement=announcement)
-    database.session.add(new_announcement)
-    database.session.flush()
-    database.session.commit()
-
-  return flask.render_template(
-    "admin/announcement/create.html",
-    **d_kwargs.copy()
-  )
+# @app.route("/restart", methods=["GET", "POST"])
+# def restart_server():
+#   os.kill(os.getpid(), signal.SIGINT)
+#   return "Server is restarting..."
 
 @main_blueprint.route("signup", methods=["GET", "POST"])
 def signup():
-  kwargs = d_kwargs.copy()
   def returner(reason: str = None, input_form = None) -> str:
-    return flask.render_template(
-      "signup.html",
+    return render_template(
+      "authentication/signup.html",
       failed_signup_authorization_reason=reason,
-      form=input_form,
-      **kwargs
+      form=input_form
     )
 
-  if flask_login.current_user.is_authenticated:
-    return flask.redirect(flask.url_for("user.home"))
+  if current_user.is_authenticated:
+    return redirect(url_for("user_view.home"))
 
   form = SignupForm()
 
@@ -81,27 +99,56 @@ def signup():
     if len(password) < 7:
       return returner("Password must be at least 7 characters.", form)
 
-    new_user = User(username=username, email=email, password=generate_password_hash(password, method="sha256"), role_id=1)
+    new_user = User(
+      username=username,
+      email=email,
+      password=generate_password_hash(password, method="scrypt"),
+      role_id=1,
+      activation=(not SEND_ACTIVATION_EMAIL)
+    )
     database.session.add(new_user)
-    database.session.flush()
     database.session.commit()
-    return flask.redirect(flask.url_for("user.login", **kwargs))
 
-  return flask.render_template("signup.html", form=form, **kwargs)
+    new_user_profile = UserProfile(user_id = new_user.id)
+    database.session.add(new_user_profile)
+    database.session.commit()
+
+    if not SEND_ACTIVATION_EMAIL:
+      return redirect(url_for("user_view.login"))
+    else:
+      verification_uuid, verification_code = str(uuid4()), str(uuid4())
+
+      new_status = UserActivationStatus(user_id=new_user.id, uuid=verification_uuid, verification_code=verification_code)
+      database.session.add(new_status)
+      database.session.commit()
+
+      def send_email():
+        with app.app_context():
+          with smtplib.SMTP_SSL(SMTP_SENDING_SERVER, SMTP_PORT, context=ssl.create_default_context()) as server:
+            server.login(ACTIVATION_EMAIL_SENDER, os.getenv("EMAIL_PASSWORD"))
+            message = EmailMessage()
+            message["From"] = ACTIVATION_EMAIL_SENDER
+            message["To"] = email
+            message["Subject"] = "TomChienXu Online Judge - Activation Email"
+            message.attach(MIMEText(render_template("authentication/activation_email.html", activation_link=f"{FULL_DOMAIN_WITH_SCHEME}/activation/{verification_uuid}/{verification_code}"), "html"))
+            server.send_message(message)
+
+      Thread(target=send_email).start()
+      return render_template("authentication/activation_email_sent.html")
+
+  return render_template("authentication/signup.html", form=form)
 
 @main_blueprint.route("login", methods=["GET", "POST"])
 def login():
-  kwargs = d_kwargs.copy()
   def returner(reason: str = None, input_form = None) -> str:
-    return flask.render_template(
-      "login.html",
+    return render_template(
+      "authentication/login.html",
       failed_login_authorization_reason=reason,
-      form=input_form,
-      **kwargs
+      form=input_form
     )
 
-  if flask_login.current_user.is_authenticated:
-    return flask.redirect(flask.url_for("user.home"))
+  if current_user.is_authenticated:
+    return redirect(url_for("user_view.home"))
 
   form = LoginForm()
 
@@ -116,176 +163,369 @@ def login():
     if not check_password_hash(user.password, password):
       return returner("Password not match.", form)
 
-    flask_login.login_user(user)
-    return flask.redirect(flask.url_for("user.home"))
+    if not user.activation:
+      return returner("This user has not been activated.", form)
 
-  return flask.render_template("login.html", form=form, **kwargs)
+    flask_login.login_user(user)
+    return redirect(url_for("user_view.home"))
+
+  return render_template("authentication/login.html", form=form)
 
 @main_blueprint.route("/logout")
 def logout():
   flask_login.logout_user()
-  return flask.redirect(flask.url_for("user.login"))
+  return redirect(url_for("user_view.login"))
 
 @main_blueprint.route("/")
 def home():
-  kwargs = d_kwargs.copy()
-  announcement_data = [a.__dict__ for a in Announcement.query.order_by(desc(Announcement.id)).all()]
-  for announcement in announcement_data:
-    announcement["author"] = User.query.filter_by(id=announcement["author"]).first()
-    announcement["announcement"] = markdown.convert(announcement["announcement"])
+  with database.session.no_autoflush:
+    if current_user.is_authenticated and current_user.role.check("VIEW_PRIVATE_ANNOUNCEMENTS"): 
+      announcements = Announcement.query.order_by(desc(Announcement.id)).all()
+    else:
+      announcements = Announcement.query.filter_by(visibility=True).order_by(desc(Announcement.id)).all()
+    for announcement in announcements:
+      announcement.announcement = markdown.convert(announcement.announcement)
 
-  return flask.render_template(
-    "user/home/home.html",
-    announcements=announcement_data,
-    **kwargs
-  )
+    return render_template(
+      "user/home/home.html",
+      announcements=announcements
+    )
+
+@main_blueprint.route("/activation/<string:uuid>/<string:verification_code>")
+def activate_account(uuid: str, verification_code: str):
+  status = UserActivationStatus.query.filter_by(uuid=uuid, verification_code=verification_code).first()
+
+  if not status:
+    return render_template("authentication/activated_unsuccessfully.html")
+
+  User.query.filter_by(id=status.user_id).first().activation = expression.true()
+  database.session.delete(status)
+  database.session.commit()
+
+  return render_template("authentication/activated_successfully.html")
 
 @main_blueprint.route("/about")
 def about():
-  kwargs = d_kwargs.copy()
+  return render_template("user/home/about.html")
 
-  return flask.render_template(
-    "user/home/about_and_judges.html",
-    **kwargs
-  )
-
-from judges.judge import Judge
 @main_blueprint.route("/judges")
 def judges():
-  kwargs = d_kwargs.copy()
+  status = {
+    judge: judge.language_statuses.copy() for judge in global_OJ_judges
+  } if global_OJ_judges else {}
 
-  return flask.render_template(
+  languages = {}
+  for judge_status in list(status.values()):
+    for language_id, language_status in list(judge_status.items()):
+      languages.update({language_id: language_status.get("display_name", "Not Found")})
+
+  return render_template(
     "user/home/judges.html",
-    status={
-      Judge("Kay/O", "Con nhện đang bay...", ["PYTHON3", "CPP20"]): global_OJ_judge.language_statuses.copy(),
-      Judge("Chamber", "Con nhện đang bay...", ["PYTHON3", "CPP20"]): global_OJ_judge.language_statuses.copy(),
-      Judge("Killjoy", "Con nhện đang bay...", ["PYTHON3", "CPP20"]): global_OJ_judge.language_statuses.copy(),
-      Judge("Sage", "Con nhện đang bay...", ["PYTHON3", "CPP20"]): global_OJ_judge.language_statuses.copy(),
-      Judge("Omen", "Con nhện đang bay...", ["PYTHON3", "CPP20"]): global_OJ_judge.language_statuses.copy(),
-      Judge("Viper", "Con nhện đang bay...", ["PYTHON3", "CPP20"]): global_OJ_judge.language_statuses.copy(),
-      Judge("Fade", "Con nhện đang bay...", ["PYTHON3", "CPP20"]): global_OJ_judge.language_statuses.copy(),
-      Judge("Sova", "Con nhện đang bay...", ["PYTHON3", "CPP20"]): global_OJ_judge.language_statuses.copy(),
-      Judge("Yoru", "Con nhện đang bay...", ["PYTHON3", "CPP20"]): global_OJ_judge.language_statuses.copy(),
-      Judge("Raze", "Con nhện đang bay...", ["PYTHON3", "CPP20"]): global_OJ_judge.language_statuses.copy(),
-      Judge("Jett", "Con nhện đang bay...", ["PYTHON3", "CPP20"]): global_OJ_judge.language_statuses.copy(),
-      Judge("Brimstone", "Con nhện đang bay...", ["PYTHON3", "CPP20"]): global_OJ_judge.language_statuses.copy(),
-      Judge("Gekko", "Con nhện đang bay...", ["PYTHON3", "CPP20"]): global_OJ_judge.language_statuses.copy(),
-      Judge("Phoenix", "Con nhện đang bay...", ["PYTHON3", "CPP20"]): global_OJ_judge.language_statuses.copy(),
-      Judge("Reyna", "Con nhện đang bay...", ["PYTHON3", "CPP20"]): global_OJ_judge.language_statuses.copy(),
-      Judge("Breach", "Con nhện đang bay...", ["PYTHON3", "CPP20"]): global_OJ_judge.language_statuses.copy(),
-      Judge("Skye", "Con nhện đang bay...", ["PYTHON3", "CPP20"]): global_OJ_judge.language_statuses.copy(),
-      Judge("Astra", "Con nhện đang bay...", ["PYTHON3", "CPP20"]): global_OJ_judge.language_statuses.copy(),
-      Judge("Neon", "Con nhện đang bay...", ["PYTHON3", "CPP20"]): global_OJ_judge.language_statuses.copy(),
-      Judge("Harbor", "Con nhện đang bay...", ["PYTHON3", "CPP20"]): global_OJ_judge.language_statuses.copy(),
-      Judge("Cypher", "Con nhện đang bay...", ["PYTHON3", "CPP20"]): global_OJ_judge.language_statuses.copy(),
-      global_OJ_judge: global_OJ_judge.language_statuses.copy()
-    },
-    **kwargs
+    status=status,
+    languages=languages
   )
 
-@main_blueprint.route("/problems/<string:problem_code>", methods=["GET", "POST"])
+@main_blueprint.route("/problems", defaults={"page": 1})
+@main_blueprint.route("/problems/<int:page>")
+def problem_list(page = 1):
+  if current_user.is_authenticated and current_user.profile.attending_contest_id:
+    problems = Problem.query.filter(Problem.problem_name.in_([problem.problem_name for problem in current_user.profile.contest.problem_set])).paginate(page=page)
+  else:
+    if current_user.is_authenticated and current_user.role.check("VIEW_PRIVATE_PROBLEMS"):
+      pagination = database.select(Problem)
+    else:
+      pagination = database.select(Problem).where(Problem.visibility == 1)
+    problems = database.paginate(pagination, page=page, per_page=100)
+
+  return render_template("user/problem/list.html", problems=problems, endpoint="user_view.problem_list")
+
+@main_blueprint.route("/p/<string:problem_code>", methods=["GET", "POST"])
 def problem_view(problem_code):
-  kwargs = d_kwargs.copy()
+  with database.session.no_autoflush:
+    problem = Problem.query.filter_by(problem_code=problem_code).first()
 
-  with db_con:
-    problem = db_con.cursor().execute("SELECT * FROM Problem WHERE problem_code = ?", (problem_code, )).fetchone()
+    if not problem:
+      abort(404, f"No problems named {problem_code}.")
 
-  if not problem:
-    return ErrorPage(404, Exception(f"No problems named {problem_code}")).set()
+    for markdown_key in ["problem_legend", "problem_editorial"]:
+      if getattr(problem, markdown_key) is not None:
+        setattr(problem, markdown_key, markdown.convert(getattr(problem, markdown_key)) if getattr(problem, markdown_key) else False)
 
-  problem["author"] = User.from_id(problem["author"])
-  problem["problem_data"] = loads(problem["problem_data"])
+    for json_key in ["language_specific_resource_limits",]:
+      try:
+        value = loads(getattr(problem, json_key))
+      except:
+        value = {}
+      setattr(problem, json_key, value)
 
-  for md_key in ["editorial"]:
-    problem[md_key] = markdown.convert(problem[md_key])
+    return render_template(
+      "user/problem/problem.html",
+      problem=problem
+    )
 
-  for user_key in ["publishers", "testers", "banned_users"]:
-    if isinstance(problem["problem_data"][user_key], list):
-      problem["problem_data"][user_key] = [User.from_id(id) for id in loads(problem["problem_data"][user_key])]
+@main_blueprint.route("/p/<string:problem_code>/testcase", methods=["GET", "POST"])
+def problem_testcase_management(problem_code):
+  def returner(reason: str = None, upload_form = None, problem = None) -> str:
+    return render_template(
+      "user/problem/testcase_management.html",
+      failed_upload_reason=reason,
+      upload_form=upload_form,
+      problem=problem
+    )
 
-  for md_key in ["problem_legend", "problem_input", "problem_output", "problem_clarification", "problem_source"]:
-    if problem["problem_data"][md_key] is not None:
-      problem["problem_data"][md_key] = markdown.convert(problem["problem_data"][md_key])
+  upload_form = UploadCaseForm()
+  upload_custom_checker_form = UploadCustomChecker()
 
-  for example in problem["problem_data"]["problem_examples"]:
-    for md_key in ["input", "output", "explanation"]:
-      if example[md_key] is not None:
-        example[md_key] = markdown.convert(example[md_key])
+  with database.session.no_autoflush:
+    problem = Problem.query.filter_by(problem_code=problem_code).first()
 
-  return flask.render_template(
-    "user/problem/problem.html",
-    **kwargs,
-    problem=problem
-  )
+    parent_folder_directory = os.path.join(PROBLEM_TESTCASE_ROOT_STORAGE, problem_code)
+    if upload_form.validate_on_submit():
+      zip_file = upload_form.zip_compressed_case_file.data
+      filename = secure_filename(zip_file.filename)
 
-@main_blueprint.route("/problems/<string:problem_code>/submit", methods=["GET", "POST"])
+      if not check_extension(filename):
+        return returner("The case file was unsuccessfully uploaded due to not having the right extension. Please retry with another file whose extension is <b>.zip</b>!", upload_form = upload_form, problem = problem)
+
+      create_sub_path_if_not_exists(parent_folder_directory)
+      file_full_directory = os.path.join(parent_folder_directory, filename)
+      zip_file.save(file_full_directory)
+
+      with zipfile.ZipFile(file_full_directory, "r") as zip:
+        zip.extractall(parent_folder_directory)
+
+      files = get_files(f"{PROBLEM_TESTCASE_ROOT_STORAGE}/{problem_code}")
+
+      input_files = sorted(re.findall(r"(\d+)\.in", " ".join(files)), key=lambda x: int(x))
+      output_files = sorted(re.findall(r"(\d+)\.out", " ".join(files)), key=lambda x: int(x))
+
+      problem_cases_new_data = {
+        "allow_submitting": True,
+        "custom_checker": None,
+        "cases": [[]]
+      }
+
+      for input_file in input_files:
+        case_data = {"input_file": f"{input_file}.in"}
+        if input_file in output_files:
+          case_data["output_file"] = f"{input_file}.out"
+        case_data["point"] = 1.0
+        problem_cases_new_data["cases"][0].append(case_data)
+
+      save_json_data(f"{PROBLEM_TESTCASE_ROOT_STORAGE}/{problem_code}/data.json", problem_cases_new_data)
+
+      os.remove(file_full_directory)
+
+    if upload_custom_checker_form.validate_on_submit():
+      custom_checker = upload_custom_checker_form.custom_checker.data
+      create_sub_path_if_not_exists(parent_folder_directory)
+      if os.path.exists(os.path.join(parent_folder_directory, "data.json")):
+        problem_cases_new_data = get_json_data(f"{PROBLEM_TESTCASE_ROOT_STORAGE}/{problem_code}/data.json")
+        print(custom_checker)
+        problem_cases_new_data["custom_checker"] = custom_checker
+        save_json_data(f"{PROBLEM_TESTCASE_ROOT_STORAGE}/{problem_code}/data.json", problem_cases_new_data)
+
+    if not problem:
+      abort(404, f"No problems named {problem_code}.")
+
+    if os.path.exists(parent_folder_directory):
+      files = get_files(f"{PROBLEM_TESTCASE_ROOT_STORAGE}/{problem_code}")
+    else:
+      files = []
+
+    if os.path.exists(os.path.join(parent_folder_directory, "data.json")):
+      problem_cases_data = get_json_data(f"{PROBLEM_TESTCASE_ROOT_STORAGE}/{problem_code}/data.json")
+      custom_checker = problem_cases_data.get("custom_checker")
+    else:
+      problem_cases_data = custom_checker = None
+
+    sub_kwargs = {
+      "upload_form": upload_form,
+      "upload_custom_checker_form": upload_custom_checker_form,
+      "problem": problem,
+      "files": files,
+      "custom_checker": custom_checker or "",
+      "problem_cases_data": problem_cases_data
+    }
+
+    return render_template("user/problem/testcase_management.html", **sub_kwargs)
+
+@main_blueprint.route("/p/<string:problem_code>/submit", methods=["GET", "POST"])
+@login_required
 def problem_submit(problem_code):
-  kwargs = d_kwargs.copy()
-
-  with db_con:
-    problem = db_con.cursor().execute("SELECT * FROM Problem WHERE problem_code = ?", (problem_code, )).fetchone()
-
-  if not problem:
-    flask.abort(404, Exception(f"No problems named {problem_code}."))
-
-  problem["author"] = User.from_id(problem["author"])
-  problem["problem_data"] = loads(problem["problem_data"])
-
-  for user_key in ["publishers", "testers", "banned_users"]:
-    if isinstance(problem["problem_data"][user_key], list):
-      problem["problem_data"][user_key] = [User.from_id(id) for id in loads(problem["problem_data"][user_key])]
-
   form = ProblemSubmitForm()
   form.language.choices = [(
     language,
-    importlib.import_module(f"{LANGUAGE_EXECUTOR_ROOT_STORAGE}.{language}").Executor.language_full_name
-  ) for language in [language for language, status in global_OJ_judge.language_statuses.items() if status["status"]]]
+    ProgrammingLanguage.query.filter_by(language_id=language).first().language_full_name
+  ) for language in [language for language, status in global_OJ_judge.language_statuses.items() if status["status"]]] if global_OJ_judge else []
 
   if form.validate_on_submit():
-    judge_process = global_OJ_judge.initialize_judging_process(
-      "dinhcao_viethoangpopping",
+    if problem_code not in get_sub_directories(PROBLEM_TESTCASE_ROOT_STORAGE):
+      abort(404, f"No cases for this problem named {problem_code} have been found.")
+
+    problem_data = get_json_data(f"{PROBLEM_TESTCASE_ROOT_STORAGE}/{problem_code}/data.json")
+
+    if not problem_data.get("allow_submitting"):
+      abort(403, f"The author of this problem {problem_code} (or an administrator) has disabled submitting status for this one. You are not allowed to submit to this problem! Try again later.")
+
+    if Submission.query.filter_by(judging=1, author_id=current_user.id).count() >= MAX_NUMBER_OF_SUBMISSIONS_PER_USER:
+      abort(404, f"You can't submit more than {MAX_NUMBER_OF_SUBMISSIONS_PER_USER} submissions at a time!")
+
+    judge_process_authentication = global_OJ_judge.initialize_judging_process(
+      problem_code,
       "OI",
       form.language.data,
-      form.code.data,
+      form.code.data
     )
     
-    data = {
-      "code": form.code.data,
-      "problem": Problem.from_id(1),
-      "author": User.from_id(1),
-      "language": importlib.import_module(f"{LANGUAGE_EXECUTOR_ROOT_STORAGE}.{form.language.data}").Executor,
-      "submitted_at": datetime.now(),
-      "result": global_OJ_judge.execute_all_judging_process(judge_process)
+    new_submission = Submission(
+      code = form.code.data,
+      judge_id = Judge.query.filter_by(name=global_OJ_judge.name).first().id,
+      judge_authentication = global_OJ_judge.authentication,
+      submission_authentication = judge_process_authentication,
+      author_id = current_user.id,
+      problem_id = Problem.query.filter_by(problem_code=problem_code).first().id,
+      programming_language_id = ProgrammingLanguage.query.filter_by(language_id=form.language.data).first().id,
+      judging = 1
+    )
+    database.session.add(new_submission)
+    database.session.commit()
+
+    def finish_judging_process(id):
+      with app.app_context():
+        result = global_OJ_judge.execute_all_judging_process(judge_process_authentication)
+        submission = Submission.query.filter_by(id=id).first()
+        submission.result = dumps(result, ensure_ascii=True)
+        submission.judging = 0
+        database.session.commit()
+
+    if global_OJ_judge.socket_supported and form.language.data != "TEXT":
+      Thread(target=finish_judging_process, args=[new_submission.id]).start()
+    else:
+      finish_judging_process(new_submission.id)
+
+    return redirect(url_for("user_view.submission_view", submission_id=new_submission.id))
+
+  with database.session.no_autoflush:
+    problem = Problem.query.filter_by(problem_code=problem_code).first()
+
+    if not problem:
+      abort(404, f"No problems named {problem_code}.")
+
+    return render_template(
+      "user/problem/submit.html",
+      problem=problem,
+      form=form,
+      no_judges_running=not (global_OJ_judge)
+    )
+
+@main_blueprint.route("/submissions", defaults={"page": 1})
+@main_blueprint.route("/submissions/<int:page>")
+def submission_list(page = 1):
+  submissions = database.paginate(database.select(Submission).order_by(desc(Submission.time)), page=page)
+  return render_template("user/submission/list.html", submissions=submissions, endpoint="user_view.submission_list")
+
+@main_blueprint.route("/submissions/mine", defaults={"page": 1})
+@main_blueprint.route("/submissions/mine/<int:page>")
+@login_required
+def my_submission_list(page = 1):
+  submissions = database.paginate(database.select(Submission).where(Submission.author == current_user).order_by(desc(Submission.time)), page=page)
+  return render_template("user/submission/list.html", submissions=submissions, endpoint="user_view.my_submission_list")
+
+@main_blueprint.route("/s/<int:submission_id>/rejudge", methods=["POST"])
+def submission_rejudge(submission_id):
+  if not current_user.is_authenticated or not current_user.role.check("ADMIN"):
+    return jsonify({"status": "error", "error_log": "You don't have permissions to access and execute this action!"}), 403
+
+  submission = Submission.query.filter_by(id=submission_id).first()
+  if not submission:
+    return jsonify({"status": "error", "error_log": f"No submission whose ID is {submission_id}."}), 404
+
+  judge_process_authentication = global_OJ_judge.initialize_judging_process(
+    submission.problem.problem_code,
+    "OI",
+    submission.programming_language.language_id,
+    submission.code
+  )
+
+  submission.submission_authentication = judge_process_authentication
+  submission.result = dumps([])
+  submission.judging = 1
+  database.session.commit()
+  
+  def finish_judging_process(id):
+    with app.app_context():
+      submission = Submission.query.filter_by(id=id).first()
+      result = global_OJ_judge.execute_all_judging_process(judge_process_authentication)
+      submission.result = dumps(result, ensure_ascii=True)
+      submission.judging = 0
+      database.session.commit()
+
+  Thread(target=finish_judging_process, args=[submission_id]).start()
+  return jsonify({"status": "success"}), 200
+
+@main_blueprint.route("/s/<int:submission_id>")
+@login_required
+def submission_view(submission_id):
+  with database.session.no_autoflush:
+    submission = Submission.query.filter_by(id=submission_id).first()
+
+    if not submission:
+      abort(404, f"No submission whose ID is {submission_id}.")
+
+    submission.result = loads(submission.result)
+    submission.markdown_code = markdown.convert(
+f"""```{submission.programming_language.file_extension}
+{submission.code}
+```"""
+    )
+
+    return render_template(
+      "user/submission/submission.html",
+      submission=submission
+    )
+
+@main_blueprint.route("/users", defaults={"page": 1})
+@main_blueprint.route("/users/<int:page>")
+def user_list(page = 1):
+  users = database.paginate(database.select(User), page=page)
+  return render_template("user/user/list.html", users=users)
+
+@main_blueprint.route("/u/<string:username>")
+def user_profile_view(username):
+  return render_template(f"user/user/profile.html")
+
+@main_blueprint.route("/tournaments")
+def tournament_list():
+  return redirect(url_for("user_view.tournament_view", year=2023))
+
+@main_blueprint.route("/t/<int:year>")
+def tournament_view(year = 2023):
+  return render_template(f"user/tournament/{year}.html")
+
+@main_blueprint.route("/contests", defaults={"page": 1})
+@main_blueprint.route("/contests/<int:page>")
+def contest_list(page = 1):
+  contests = database.paginate(database.select(Contest).order_by(desc(Contest.start_time)), page=page)
+  return render_template("user/contest/list.html", contests=contests)
+
+@main_blueprint.route("/c/<string:contest_code>")
+@login_required
+def contest_view(contest_code): 
+  with database.session.no_autoflush as session:
+    contest = Contest.query.filter_by(contest_code=contest_code).first()
+
+    if not contest:
+      abort(404, f"No contest whose code is {contest_code}.")
+
+    contest_problem_set_data = {
+      problem: session.query(Contest_Problem).filter_by(contest_id=contest.id, problem_id=problem.id).first() for problem in contest.problem_set
     }
 
-    return flask.render_template(
-      "user/submission/submission.html",
-      data=data,
-      **d_kwargs.copy()
+    contest.description = markdown.convert(contest.description)
+
+    return render_template(
+      "user/contest/contest.html",
+      contest=contest,
+      contest_problem_set_data=contest_problem_set_data
     )
-    return 
-    # return flask.redirect(flask.url_for("user.problem_submit", problem_code="cses1635"))
-
-  return flask.render_template(
-    "user/problem/submit.html",
-    **kwargs,
-    problem=problem,
-    form=form
-  )
-
-@main_blueprint.route("/submissions/<int:submission_id>")
-def submission_view(submission_id):
-  data = {
-    "code": "print(sum(map(int, input().split())))",
-    "problem": Problem.from_id(1),
-    "author": User.from_id(1),
-    "language": importlib.import_module(f"{LANGUAGE_EXECUTOR_ROOT_STORAGE}.PYTHON3").Executor,
-    "submitted_at": "05/26/2023, 23:18:37",
-    "result": []
-  }
-
-  return flask.render_template(
-    "user/submission/submission.html",
-    data=data,
-    **d_kwargs.copy()
-  )

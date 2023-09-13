@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Submit to {{ problem["problem_data"]["problem_name"] }}{% endblock %}
+{% block title %}Submit to {{ problem.problem_name }}{% endblock %}
 
 {% block additional_styles %}
 <style type="text/css" media="screen">
@@ -18,10 +18,15 @@
 </style>
 {% endblock %}
 
-{% block body %}
+{% block view_page_body %}
 <div class="submitting-section">
-  <h2>Submission to <a href='{{ url_for("user.problem_view", problem_code=problem["problem_code"]) }}'>({{ problem["problem_code"] }}) {{ problem["problem_data"]["problem_name"] }}</a>:</h2>
+  <h2>Submission to <a href='{{ url_for("user_view.problem_view", problem_code=problem.problem_code) }}'>({{ problem.problem_code }}) {{ problem.problem_name }}</a>:</h2>
   <hr class="close">
+  {% if no_judges_running %}
+  <div class="alert alert-danger" role="alert">
+    There are no judges running! If you believe this is an error, contact the owner, administrators or moderators to resolve the problem!
+  </div>
+  {% else %}
   <div class="card">
     <div class="card-body">
       <span>Paste your code, choose the programming language and click <b>Submit</b> to create a submission:</span>
@@ -36,15 +41,20 @@
         <form method="POST" id="submit-form">
           <div class="language-select">
             {{ form.hidden_tag() }}
-            {{ form.language(class="form-select") }}
+            {{ form.language(class="form-control form-select") }}
           </div>
         </form>
         <div class="submit">
           <button id="submit-button" class="btn btn-primary">Submit</button>
         </div>
+        <div class="submit-loading d-flex align-items-center d-none">
+          <strong class="text-secondary me-2">Submitting...</strong>
+          <div class="spinner-border text-secondary ms-auto" role="status" aria-hidden="true"></div>
+        </div>
       </div>
     </div>
   </div>
+  {% endif %}
 </div>
 {% endblock %}
 
@@ -55,6 +65,9 @@
   editor.session.setMode("ace/mode/python");
 
   $("button#submit-button").click(() => {
+    $("div.submit").hide();
+    $("div.submit-loading").removeClass("d-none");
+
     $("input[type='hidden']#code").val(editor.getValue());
     $("form#submit-form").submit();
   });

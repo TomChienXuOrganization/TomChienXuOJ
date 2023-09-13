@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+{% block title %}Cases Management Of {{ problem.problem_name }}{% endblock %}
+
+{% block additional_styles %}
+<style>
+  th.text-start {
+    text-align: left!important;
+  }
+
+  .outer-editor {
+    position: relative;
+    width: 100%;
+    height: 50vh;
+    margin: auto;
+  }
+
+  #editor {
+    width: 100%;
+    height: 100%;
+    font-size: 15px;
+  }
+</style>
+{% endblock %}
+
+{% block view_page_body %}
+{{ header("Cases management of <a href='" +  url_for("user_view.problem_view", problem_code=problem.problem_code) + "'>(" + problem.problem_code + ") " + problem.problem_name + "</a>:") }}
+{% if failed_upload_reason %}
+<div class="alert alert-danger">
+  {{ failed_upload_reason | safe }}
+</div>
+{% endif %}
+<div class="table-responsive mb-3">
+  <table class="table table-hover table-bordered">
+    <thead>
+        <tr>
+          <th class="col-3 border-black">#</th>
+          <th class="col border-black">Operators and Settings</th>
+        </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th scope="row" class="text-start ps-3 border-black">Allow users to submit:</th>
+        <td scope="row" class="text-center">
+          <input class="form-check-input" type="checkbox" value="" id="flexCheckIndeterminate" checked>
+        </td>
+      </tr>
+      <tr>
+        <th scope="row" class="text-start ps-3 border-black">Data ".zip" file (Compressed File):</th>
+        <td scope="row">
+          <div>
+            <form class="input-group" method="POST" enctype="multipart/form-data">
+              {{ upload_form.hidden_tag() }}
+              {{ upload_form.zip_compressed_case_file(class="form-control", id="formFile") }}
+              {{ upload_form.submit(class="btn btn-outline-success") }}
+            </form>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <th scope="row" class="text-start ps-3 border-black">Checker:</th>
+        <td scope="row">
+          <select class="form-select form-control">
+            <option value="0" selected>Standard/Default Checker (Character-by-character)</option>
+            <option value="1">Custom Checker (Support Special Judge and Interactive)</option>
+            <option value="2" disabled>Floats (General)</option>
+            <option value="3" disabled>Floats (Absolute)</option>
+            <option value="4" disabled>Floats (Relative)</option>
+            <option value="5" disabled>Non-trailing Spaces</option>
+            <option value="6" disabled>Unordered</option>
+            <option value="7" disabled>Byte Identical</option>
+            <option value="8" disabled>Line-by-line</option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <th scope="row" class="text-start ps-3 border-black">Input method:</th>
+        <td scope="row"><i>*This field can't be changed!</i> <b>stdin</b> (Standard Input)</td>
+      </tr>
+      <tr>
+        <th scope="row" class="text-start ps-3 border-black">Output method:</th>
+        <td scope="row"><i>*This field can't be changed!</i> <b>stdout</b> (Standard Output)</td>
+      </tr>
+      <tr>
+        <th scope="row" class="text-start ps-3 border-black">Judging type:</th>
+        <td scope="row">
+          <select class="form-select form-control">
+            <option value="1" selected>OI</option>
+            <option value="2">ICPC</option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <th scope="row" class="text-start ps-3 border-black">Fill cases:</th>
+        <td scope="row" class="text-center">
+          <button class="btn btn-primary">Fill cases with auto-order</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="alert alert-warning">
+  In development version of TomChienXuOJ, we only support case files whose filename patterns match <b>*.in</b> and <b>*.out</b>, with the star replaced by numerical order of which. This is the only pattern (by now) that we support auto-fill feature, the other patterns need managing manually by authors!
+</div>
+
+<div class="table-responsive mb-3">
+  <table class="table table-hover table-bordered">
+    <thead>
+      <tr>
+        <th class="col-3 border-black">Order</th>
+        <th class="col-2 border-black">Type</th>
+        <th class="col-2 border-black">Input File</th>
+        <th class="col-2 border-black">Output File</th>
+        <th class="col-2 border-black">Points Granted</th>
+        <th class="col-2 border-black">Is Pre-test or not?</th>
+      </tr>
+    </thead>
+    <tbody>
+      <ul>
+        {% if problem_cases_data.cases %}
+        {% for batch in problem_cases_data.cases %}
+        {% set outer_loop = loop %}
+        <tr>
+          <td scope="row" class="text-start">
+            <input type="number" name="order" value="" id="" class="form-control">
+          </td>
+          <td scope="row" class="text-center">
+            <select class="form-select form-control text-center" name="" id="">
+              <option value="batch_start" selected>Batch Start</option>
+              <option value="batch_end">Batch End</option>
+              <option value="batch_case">Case</option>
+            </select>
+          </td>
+          <td scope="row" class="text-center">
+            <select class="form-select form-control text-center">
+              <option value="0">Unset</option>
+              {% for file in files %}
+              <option value="1">{{ file }}</option>
+              {% endfor %}
+            </select>
+          </td>
+          <td scope="row" class="text-center">
+            <select class="form-select form-control text-center">
+              <option value="0">Unset</option>
+              {% for file in files %}
+              <option value="1">{{ file }}</option>
+              {% endfor %}
+            </select>
+          </td>
+          <td scope="row" class="text-center">
+            <input type="number" name="" id="" value="" class="form-control">
+          </td>
+          <td scope="row" class="text-center">
+            <input class="form-check-input" type="checkbox" value="">
+          </td>
+        </tr>
+          {% for case in batch %}
+          <tr>
+            <td scope="row" class="text-start">
+              <input type="number" name="order" value="" id="" class="form-control">
+            </td>
+            <td scope="row" class="text-center">
+              <select class="form-select form-control text-center" name="" id="">
+                <option value="batch_start">Batch Start</option>
+                <option value="batch_end">Batch End</option>
+                <option value="batch_case" selected>Case</option>
+              </select>
+            </td>
+            <td scope="row" class="text-center">
+              <select class="form-select form-control text-center">
+                <option value="0">Unset</option>
+                {% for file in files %}
+                <option value="{{ loop.index }}" {% if file == case.input_file %}selected{% endif %}>{{ file }}</option>
+                {% endfor %}
+              </select>
+            </td>
+            <td scope="row" class="text-center">
+              <select class="form-select form-control text-center">
+                <option value="0">Unset</option>
+                {% for file in files %}
+                <option value="{{ loop.index }}" {% if file == case.output_file %}selected{% endif %}>{{ file }}</option>
+                {% endfor %}
+              </select>
+            </td>
+            <td scope="row" class="text-center">
+              <input type="number" name="" id="" value="{{ case.point }}" class="form-control">
+            </td>
+            <td scope="row" class="text-center">
+              <input class="form-check-input" type="checkbox" value="" id="flexCheckIndeterminate" checked>
+            </td>
+          </tr>
+          {% endfor %}
+        <tr>
+          <td scope="row" class="text-start">
+            <input type="number" name="order" value="" id="" class="form-control">
+          </td>
+          <td scope="row" class="text-center">
+            <select class="form-select form-control text-center" name="" id="">
+              <option value="batch_start">Batch Start</option>
+              <option value="batch_end" selected>Batch End</option>
+              <option value="batch_case">Case</option>
+            </select>
+          </td>
+          <td scope="row" class="text-center">
+            <select class="form-select form-control text-center">
+              <option value="0">Unset</option>
+              {% for file in files %}
+              <option value="1">{{ file }}</option>
+              {% endfor %}
+            </select>
+          </td>
+          <td scope="row" class="text-center">
+            <select class="form-select form-control text-center">
+              <option value="0">Unset</option>
+              {% for file in files %}
+              <option value="1">{{ file }}</option>
+              {% endfor %}
+            </select>
+          </td>
+          <td scope="row" class="text-center">
+            <input type="number" name="" id="" value="" class="form-control">
+          </td>
+          <td scope="row" class="text-center">
+            <input class="form-check-input" type="checkbox" value="">
+          </td>
+        </tr>
+        {% endfor %}
+      {% else %}
+      {% endif %}
+      </ul>
+    </tbody>
+  </table>
+</div>
+
+<h5>Custom Checker (Python 3.11):</h5>
+<div class="outer-editor">
+  <div id="editor">{{ custom_checker }}</div>
+  <form class="input-group" method="POST" id="custom-checker-form">
+    {{ upload_custom_checker_form.hidden_tag() }}
+    <button class="btn btn-outline-success" id="submit-custom-checker-button">Upload Custom Checker</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block additional_scripts %}
+<script>
+  var editor = ace.edit("editor");
+  editor.setTheme("ace/theme/monokai");
+  editor.session.setMode("ace/mode/python");
+
+  $("button#submit-custom-checker-button").click(() => {
+    $("input[type='hidden']#custom_checker").val(editor.getValue());
+    $("form#custom-checker-form").submit();
+  });
+</script>
+{% endblock %}

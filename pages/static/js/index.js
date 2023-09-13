@@ -24,26 +24,11 @@ function copyToClipboard(text) {
   document.removeEventListener("copy", listener);
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-  renderMathInElement(document.body, {
-    delimiters: [
-      { left: "$$", right: "$$", display: true },
-      { left: "$", right: "$", display: false },
-      { left: "\\(", right: "\\)", display: false },
-      { left: "\\[", right: "\\]", display: true }
-    ],
-    throwOnError: false
-  });
-
-  document.querySelectorAll("table.table-utility.preload").forEach((element) => {
-    convertToDataTable(element);
-  });
+document.querySelectorAll("table.table-utility.preload").forEach((element) => {
+  convertToDataTable(element);
 });
 
-"MM/DD/YYYY, HH:mm:ss"
-
 document.querySelectorAll(".time-from-now").forEach((element) => {
-  console.log(element.getAttribute("since"));
   element.innerHTML = moment(element.getAttribute("since"), "YYYY-MM-DD HH:mm:ss").fromNow();
 });
 
@@ -64,13 +49,20 @@ document.querySelectorAll("pre").forEach((element) => {
 })
 
 $(document).ready(() => {
-  // $("select.form-select").each((index) => {
-  //   $(this).select2({
-  //     theme: "bootstrap-5"
-  //   })
-  // });
-
-  $("select.form-select").select2({
+  $("select.form-control").select2({
     theme: "bootstrap-5"
   })
 });
+
+$("textarea").each(function(textarea) {
+  if (this.value) {
+      $(this).height($(this)[0].scrollHeight);
+  }
+});
+
+function clearAllIntervals() {
+  const intervalMaxID = window.setInterval(function(){}, Number.MAX_SAFE_INTEGER);
+  for (let i = 1; i < intervalMaxID; i++) {
+    window.clearInterval(i);
+  }
+}

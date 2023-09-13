@@ -1,0 +1,24 @@
+.contest-navbar li.nav-item a.active {
+  border-top: 3px solid #1ba94c!important;
+}
+.contest-navbar li.nav-item a:not(.active) {
+  border-top: 3px solid #ffffff!important;
+}
+.contest-navbar li.nav-item a:not(.active):hover {
+  border-top: 3px solid var(--bs-secondary)!important;
+}
+
+thead > tr > th {
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+table.announcement-table > tbody > tr > th, table.announcement-table > tbody > tr > td {
+  padding-top: 30px !important;
+  padding-bottom: 30px !important;
+}
+
+table.table th:not(.text-center), table tr td:not(.text-center) {
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+}

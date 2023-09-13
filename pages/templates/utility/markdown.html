@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Markdown{% endblock %}
+{% block additional_styles %}
+<style>
+  .outer-editor {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    margin: auto;
+  }
+
+  #editor {
+    width: 100%;
+    height: 100%;
+    font-size: 15px;
+  }
+</style>
+{% endblock %}
+
+{% block view_page_body %}
+{{ header("Markdown") }}
+<div class="row">
+  <div class="col-sm-6">
+    <div class="outer-editor">
+      <div id="editor"></div>
+    </div>
+  </div>
+  <div class="col-sm-6">
+    <div id="renderer"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block additional_scripts %}
+<script src="/static/js/markdown.js"></script>
+{% endblock %}

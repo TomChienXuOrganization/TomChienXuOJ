@@ -1,0 +1,66 @@
+{% extends "admin/master.html" %}
+{% import "admin/lib.html" as lib with context %}
+
+{% block body %}
+{% block navlinks %}
+<ul class="nav nav-pills mb-2">
+  <li class="nav-item">
+    <a class="nav-link" href="{{ return_url }}">{{ _gettext("List") }}</a>
+  </li>
+  {%- if admin_view.can_create -%}
+  <li class="nav-item">
+    <a class="nav-link" href="{{ get_url('.create_view', url=return_url) }}">{{ _gettext("Create") }}</a>
+  </li>
+  {%- endif -%}
+  {%- if admin_view.can_edit -%}
+  <li class="nav-item">
+    <a class="nav-link" href="{{ get_url('.edit_view', id=request.args.get('id'), url=return_url) }}">{{ _gettext("Edit") }}</a>
+  </li>
+  {%- endif -%}
+  <li class="nav-item">
+    <a class="nav-link active disabled" href="javascript:void(0)">{{ _gettext("Details") }}</a>
+  </li>
+</ul>
+{% endblock %}
+
+{% block details_search %}
+<div class="form-inline fa_filter_container mb-2">
+  <div class="row">
+    <label for="fa_filter" class="col-1 col-form-label"><b>{{ _gettext("Filter") }}:</b></label>
+    <div class="col">
+      <input id="fa_filter" type="text" class="ml-3 form-control">
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block details_table %}
+<div class="table-responsive mb-3">
+  <table class="table table-striped table-hover table-bordered wrapped">
+    <thead class="table-dark">
+      <tr>
+        <th scope="col" class="col-md-2 text-center">#</th>
+        <th scope="col" class="col-md-10 text-center">Data</th>
+      </tr>
+    </thead>
+    <tbody class="searchable">
+      {% for c, name in details_columns %}
+      <tr>
+        <td scope="row" class="text-center">
+          <b>{{ name }}</b>
+        </td>
+        <td>
+          {{ get_value(model, c) }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+{% endblock %}
+
+{% block body_script %}
+{{ super() }}
+<script src="{{ admin_static.url(filename='admin/js/details_filter.js', v='1.0.0') }}"></script>
+{% endblock %}

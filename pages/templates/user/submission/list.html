@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% from "helper/pagination.html" import render_pagination %}
+{% block title %}Submission List{% endblock %}
+
+{% set banner_color = {"AC": "success", "WA": "danger", "TLE": "secondary", "RTE": "warning", "IR": "warning", "MLE": "warning", "OLE": "danger", "IE": "danger"} %}
+
+{% block view_page_body %}
+{{ header("All submissions") }}
+{% if submissions.items %}
+{{ render_pagination(submissions, endpoint) }}
+<div class="table-responsive">
+  <table class="table-sm table table-hover table-bordered">
+    <tbody>
+      {% for submission in submissions %}
+        <tr>
+          {% if submission.judging %}
+          <td class="text-nowrap text-center col-auto bg-secondary-subtle text-secondary-emphasis" style="white-space: nowrap!important;">
+            <div>
+              <span class="h5">Pending</span>
+            </div>
+            <div class="px-2">
+              <small><b>Judging</b>, {{ submission.programming_language.language_full_name }}</small>
+            </div>
+          </td>
+          {% else %}
+          <td class="text-nowrap text-center col-auto bg-{{ banner_color[submission.status] }}-subtle text-{{ banner_color[submission.status] }}-emphasis" style="white-space: nowrap!important;">
+            <div>
+              <span class="h5">{{ submission.correct_count }} / {{ submission.all_test_count }}</span>
+            </div>
+            <div class="px-2">
+              <small><b>{{ submission.status }}</b>, {{ submission.programming_language.language_full_name }}</small>
+            </div>
+          </td>
+          {% endif %}
+          <td class="px-3 col-11 align-middle">
+            <div class="d-flex justify-content-between">
+              <div>
+                <div>
+                  <a class="fs-5" href="{{ url_for('user_view.problem_view', problem_code=submission.problem.problem_code) }}"><b>{{ submission.problem.problem_name }}</b></a>
+                </div>
+                <div>
+                  By {{ submission.author.render_display | safe }}, <span class="time-from-now" since="{{ submission.time_timezone }}"></span>
+                </div>
+              </div>
+              <div class="align-self-center">
+                <a href="{{ url_for('user_view.submission_view', submission_id=submission.id) }}">View</a>
+                •
+                <a href="{{ url_for('submission.edit_view', id=submission.id) }}">Admin</a>
+                •
+                <a href="#rejudge" class="rejudge" submission="{{ submission.id }}">Rejudge</a>
+              </div>
+            </div>
+          </td>
+          <td class="text-nowrap text-center col-auto bg-{{ banner_color[submission.status] }}-subtle text-{{ banner_color[submission.status] }}-emphasis" style="white-space: nowrap!important;">
+            <div>
+              <span class="h5">{{ submission.resources_used[0] }}s</span>
+            </div>
+            <div class="px-2">
+              {{ submission.resources_used[1] }} Mb
+            </div>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ render_pagination(submissions, endpoint) }}
+{% else %}
+<div class="alert alert-warning" role="alert">
+  There are no submissions which are available.
+</div>
+{% endif %}
+{% endblock %}
+
+{% block additional_scripts %}
+<script src="/static/js/rejudge.js"></script>
+<script>
+  document.querySelectorAll("a.rejudge").forEach((element) => {
+    element.addEventListener("click", () => {
+      rejudge(parseInt(element.getAttribute("submission")));
+    });
+  });
+</script>
+{% endblock %}

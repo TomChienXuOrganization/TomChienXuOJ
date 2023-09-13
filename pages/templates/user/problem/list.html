@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Problem List{% endblock %}
+
+{% block view_page_body %}
+{{ header("List of problems") }}
+{% if problems.items %}
+{{ render_pagination(problems, endpoint) }}
+<div class="table-responsive">
+  <table class="table-sm table-striped table table-hover table-bordered">
+    <thead class="table-dark">
+      <tr>
+        <th scope="col" class="col-md-auto"><i class="bi bi-eye"></i></th>
+        <th scope="col" class="col-md-4">Name</th>
+        <th scope="col" class="col-md-3">Problem Code</th>
+        <th scope="col" class="col-md-2">Author</th>
+        <th scope="col" class="col-md-2">Problem Category</th>
+        <th scope="col" class="col-md-1">Points</th>
+        <th scope="col" class="col-md-auto text-center">Submissible</th>
+        <th scope="col" class="col-md-auto text-center">Editorial</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for problem in problems %}
+      <tr>
+        <td class="align-middle text-center">{{ tick(problem.visibility) }}</td>
+        <td class="align-middle px-3"><a href="{{ url_for('user_view.problem_view', problem_code=problem.problem_code) }}">{{ problem.problem_name }}</a></td>
+        <td class="align-middle px-3"><a href="{{ url_for('user_view.problem_view', problem_code=problem.problem_code) }}">{{ problem.problem_code }}</a></td>
+        <td class="align-middle">{{ problem.author.render_display | safe }}</td>
+        <td class="align-middle px-3">{{ problem.problem_category.name }}</td>
+        <td class="align-middle text-center">{{ problem.point }}</td>
+        <td class="align-middle text-center">{{ tick(problem.is_submissible) }}</td>
+        <td class="align-middle text-center">{{ tick(problem.problem_editorial) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ render_pagination(problems, endpoint) }}
+{% else %}
+<div class="alert alert-warning" role="alert">
+  There are no problems registered.
+</div>
+{% endif %}
+{% endblock %}

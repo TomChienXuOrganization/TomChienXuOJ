@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Activation Email Sent{% endblock %}
+{% block view_page_body %}
+{{ header("Activation email has been sent!") }}
+<p>
+  An email which contains the verification link to activate your account has been sent to your email address. Check your inbox to continue the registration process. If you can't find it, it may be sitting in the spam folder.
+</p>
+
+<div class="alert alert-warning" role="alert">
+  This email is only available for 30 minutes. After that, it will expire and no longer can be used to activate this account!
+</div>
+{% endblock %}

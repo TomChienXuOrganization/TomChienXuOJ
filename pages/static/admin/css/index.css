@@ -8,16 +8,6 @@ html {
 body {
   margin-bottom: 100px;
   word-wrap: break-word;
-  /* font-family: 'Roboto Condensed', sans-serif; */
-}
-
-/* Prevent images overflowing */
-img {
-  width: 100%;
-}
-
-.main-body {
-  padding-top: 50px;
 }
 
 .user-profile-dropdown,
@@ -40,10 +30,6 @@ footer {
   z-index: 100000;
 }
 
-.toast, .toast-container {
-  z-index: 100001;
-}
-
 .card {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
@@ -55,11 +41,6 @@ footer {
   font-size: 1.1em;
 }
 
-.error-emoji {
-  font: 100px/1.25 Google Sans, Helvetica Neue, sans-serif;
-  margin-bottom: 24px;
-}
-
 .table {
   border-collapse: separate;
   border-spacing: 0;
@@ -67,6 +48,10 @@ footer {
 
 .table p {
   margin-bottom: 0;
+}
+
+.table th a {
+  color: #fff !important;
 }
 
 .table th.text-center {
@@ -80,7 +65,6 @@ footer {
   font-size: 1.1em;
   height: 2em;
   background-color: #231f20;
-  /* border-color: gray; */
   border-width: 0 1px 1px 0;
   border-style: solid;
   padding: 4px 10px;
@@ -90,12 +74,15 @@ footer {
 }
 
 .table td {
-  border-color: #ccc;
   border-width: 0 1px 1px 0;
   border-style: solid;
   padding: 5px 5px;
   vertical-align: middle;
-  white-space: normal !important;
+  white-space: nowrap;
+}
+
+.table.wrapped td {
+  white-space: normal;
   word-wrap: break-word;
 }
 
@@ -115,32 +102,6 @@ footer {
 .table th:first-child,
 .table td:first-child {
   border-left-width: 1px;
-}
-
-table#table-version * {
-  border-color: #373b3e !important;
-}
-
-table#table-version td.judge-name,
-td.language-name {
-  color: #fff;
-  font-weight: 600;
-  font-size: 1.1em;
-  height: 2em;
-  background-color: #231f20;
-  white-space: nowrap;
-}
-
-table#table-version td.available {
-  background: yellowgreen !important;
-}
-
-table#table-version td.unavailable {
-  background: var(--bs-danger) !important;
-}
-
-table#table-version td.not-supported {
-  background: var(--bs-warning) !important;
 }
 
 .form-group.required .control-label:after {
@@ -182,10 +143,6 @@ ul.no-bullets {
   list-style-type: none;
   padding: 0;
   margin: 0;
-}
-
-.information-column {
-  top: 70px;
 }
 
 textarea.non-resizable {
@@ -282,4 +239,33 @@ textarea.non-resizable {
   border-radius: 0 4px;
   position: absolute;
   padding: 5px 8px;
+}
+
+.navbar {
+  z-index: 100000 !important;
+}
+
+.sidebar {
+  height: 100%;
+  width: 15vw;
+  position: fixed;
+  z-index: 100;
+  top: 0;
+  left: 0;
+  background-color: #111;
+  overflow-x: hidden;
+  padding: 60px 10px;
+}
+
+.sidebar * {
+  color: #eee;
+}
+
+.main {
+  margin-left: 15vw;
+  padding: 0px 10px;
+}
+
+.main-body {
+  padding-top: 50px;
 }

@@ -1,0 +1,46 @@
+{% extends "user/contest/base.html" %}
+{% block view_contest_body %}
+<div class="my-3">
+  <div class="problem-section table-responsive">
+    <table class="table-sm table-striped table table-hover table-bordered">
+      <thead class="table-dark">
+        <tr class="border-top-0">
+          <th scope="col" class="text-center border-start-0">#</th>
+          <th scope="col" class="text-center">Visibility</th>
+          <th scope="col" class="col-md-7">Problem</th>
+          <th scope="col" class="col-md-2">Code</th>
+          <th scope="col" class="col-md-1 text-center">Score</th>
+          <th scope="col" class="col-md-2 border-end-0">Author</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for problem in contest.problem_set %}
+        <tr>
+          <td class="align-middle text-center" scope="row">{{ loop.index }}</td>
+          <td class="align-middle text-center" scope="row">
+            {{ tick(contest_problem_set_data[problem].visibility) }}
+          </td>
+          <td class="align-middle"><a href="{{ url_for('user_view.problem_view', problem_code=problem.problem_code) }}">{{ problem.problem_name }}</a></td>
+          <td class="align-middle">{{ problem.problem_code }}</td>
+          <td class="align-middle text-center"><b>{{ contest_problem_set_data[problem].point or 0 }}</b>p</td>
+          <td class="align-middle">{{ problem.author.render_display | safe }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td class="align-middle text-center" scope="row" colspan="9999">No data available!</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <hr class="close">
+  {{ contest.description | safe }}
+</div>
+{% endblock %}
+
+{% block additional_scripts %}
+{{ super() }}
+<script>
+  setNavbarActivePage("information");
+</script>
+{% endblock %}

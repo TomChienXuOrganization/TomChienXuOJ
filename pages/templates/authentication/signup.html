@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Signup{% endblock %}
+{% block additional_styles %}
+<style>
+  .card-img-left {
+    width: 40%;
+    background: scroll center url("/static/img/anya.png");
+    background-size: cover;
+  }
+
+  .btn-login {
+    font-size: 0.9rem;
+    letter-spacing: 0.05rem;
+    padding: 0.75rem 1rem;
+  }
+</style>
+{% endblock %}
+{% block view_page_body %}
+<div class="row">
+  <div class="col-lg-10 col-xl-9 mx-auto">
+    <div class="card flex-row my-5 border-0 shadow rounded-3 overflow-hidden">
+      <div class="card-img-left d-none d-md-flex">
+      </div>
+      <div class="card-body p-4 p-sm-5">
+        <h5 class="card-title text-center mb-4 fw-light h3">Register Account</h5>
+        <form method="POST">
+          <div style="height: 10vh;"></div>
+          {% if failed_signup_authorization_reason %}
+          <div class="alert alert-danger" role="alert">
+            {{ failed_signup_authorization_reason }}
+          </div>
+          {% endif %}
+          {{ form.hidden_tag() }}
+          <div class="form-floating mb-3">
+            {{ form.username(class="form-control", id="username-input", placeholder="Username", autofocus=True) }}
+            {{ form.username.label(for="username-input") }}
+          </div>
+          <div class="form-floating mb-3">
+            {{ form.email(class="form-control", id="email-input", placeholder="Email Address") }}
+            {{ form.email.label(for="email-input") }}
+          </div>
+          <hr>
+          <div class="form-floating mb-3">
+            {{ form.password(class="form-control", id="password-input", placeholder="Password") }}
+            {{ form.password.label(for="password-input") }}
+          </div>
+          <div class="form-floating mb-3">
+            {{ form.confirm_password(class="form-control", id="confirm-password-input", placeholder="Confirm Password") }}
+            {{ form.confirm_password.label(for="confirm-password-input") }}
+          </div>
+          <div class="d-grid mb-2">
+            {{ form.submit(class="btn btn-lg btn-primary btn-login fw-bold text-uppercase") }}
+          </div>
+          <hr>
+          <a class="d-block text-center mt-2 small" href='{{ url_for("user_view.login") }}'>Have an account? Sign In</a>
+          <div style="height: 10vh;"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

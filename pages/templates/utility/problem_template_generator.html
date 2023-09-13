@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Problem Template Generator{% endblock %}
+
+{% block view_page_body %}
+{{ header("Problem template generator") }}
+<div class="row">
+  <div class="col-sm-6">
+    <form>
+      {{ form.hidden_tag() }}
+      <div class="mb-1">
+        <b>{{ form.legend.label(for="legend") }}:</b>
+        {{ form.legend(class="form-control", id="legend", placeholder="Problem legend...", autofocus=True) }}
+      </div>
+      <div class="mb-1">
+        <b>{{ form.input_specification.label(for="input-specification") }}:</b>
+        {{ form.input_specification(class="form-control", id="input-specification", placeholder="Input Specification...") }}
+      </div>
+      <div class="mb-1">
+        <b>{{ form.output_specification.label(for="output-specification") }}:</b>
+        {{ form.output_specification(class="form-control", id="output-specification", placeholder="Output Specification...") }}
+      </div>
+      <b>Sample Case(s):</b>
+      <div class="mb-3 form-group">
+        <input type="hidden" id="number-of-cases" value="1">
+        <hr class="my-3">
+        <div id="sample-cases">
+          <div index="1" class="sample-case-child row">
+            <div class="d-grid gap-2 mb-2">
+              <button onclick="removeSample()" class="btn btn-danger delete-button"><b>DELETE THIS SAMPLE (1)</b></button>
+            </div>
+            <div class="col-sm-6 mb-1">
+              <b id="input-label" class="control-label">Sample Input:</b>
+              <textarea class="form-control input" placeholder="Input..." rows="3" id="input-1" name="input-1"></textarea>
+            </div>
+            <div class="col-sm-6 mb-1">
+              <b id="output-label" class="control-label">Sample Output:</b>
+              <textarea class="form-control output" placeholder="Output..." rows="3" id="output-1" name="output-1"></textarea>
+            </div>
+            <div class="col-sm-12">
+              <b id="explanation-label" class="control-label">Sample Explanation:</b>
+              <textarea class="form-control explanation" placeholder="Explanation..." rows="5" id="explanation-1" name="explanation-1"></textarea>
+            </div>
+            <div class="container">
+              <hr class="my-3">
+            </div>
+          </div>
+        </div>
+        <div class="d-grid gap-2">
+          <button type="button" onclick="addSample()" class="btn btn-primary"><b>ADD MORE SAMPLE CASES</b></button>
+        </div>
+      </div>
+      <div class="d-grid gap-2">
+        <button type="button" onclick="generate()" class="btn btn-success"><b>GENERATE</b></button>
+      </div>
+    </form>
+  </div>
+  <div class="col-sm-6">
+    <div id="renderer">
+      <div class="alert alert-primary" role="alert">
+        Edit the form to render the body!
+      </div>
+    </div>
+    <hr>
+    <div id="result"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block additional_scripts %}
+<script src="/static/js/problem_template_generator.js"></script>
+{% endblock %}

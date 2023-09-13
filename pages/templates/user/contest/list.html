@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% from "helper/pagination.html" import render_pagination %}
+{% block title %}Contest List{% endblock %}
+
+{% block view_page_body %}
+{{ header("Contests and Events") }}
+{{ render_pagination(contests, "user_view.contest_list") }}
+<div class="table-responsive">
+  <table class="table-sm table-striped table table-hover table-bordered">
+    <thead class="table-dark">
+      <tr>
+        <th scope="col" class="col-md-8 text-center">Contests</th>
+        <th scope="col" class="col-md-1 text-center">Participants</th>
+        <th scope="col" class="col-md-1 text-center">Rating</th>
+        <th scope="col" class="col-md-1 text-center">Operators</th>
+      </tr>
+    </thead>
+    <tbody>
+      <span class="d-none dynamic-beginning-time-span">begins in <b>%day% days, %hour%:%minute%:%second%</b></span>
+      <span class="d-none dynamic-remaining-time-span">ends in <b>%day% days, %hour%:%minute%:%second%</b></span>
+      <span class="d-none dynamic-ended-time-span">Contest has ended</span>
+      <span class="d-none dynamic-window-time-span">%day% days, %hour%:%minute%:%second%</span>
+      {% for contest in contests %}
+      <tr>
+        <td class="p-3" scope="row">
+          <a href="{{ url_for('user_view.contest_view', contest_code=contest.contest_code) }}" class="link"><span class="h5">{{ contest.contest_name }} ({{ contest.contest_code }})</span></a>
+          <p class="text-muted mb-2">Prepared by: {{ contest.author.render_display | safe }}; <span class="dynamic-contest-time" begin="{{ contest.start_time }}" end="{{ contest.end_time }}">Pending..</span>.</p>
+          <p class="text-muted mb-0">From <b>{{ contest.start_time_timezone }}</b> to <b>{{ contest.end_time_timezone }}</b> (<span class="dynamic-window-time" begin="{{ contest.start_time }}" end="{{ contest.end_time }}"></span>).</p>
+          <p class="text-muted mb-0">Anyone can attend. {% if contest.moss %}All submissions will be MOSS'd (after the contest ends).{% endif %}</p>
+        </td>
+        <td class="p-3 text-center align-middle" scope="row">
+          <b class="mb-0">12</b><br>
+        </td>
+        <td class="p-3 text-center align-middle" scope="row">
+          <p class="mb-0 text-success"><b>Rated</b></p>
+        </td>
+        <td class="p-3 text-center align-middle" scope="row">
+          <a href="{{ url_for('user_view.contest_view', contest_code=contest.contest_code) }}" class="btn btn-success">Join</a>
+        </td>
+      </tr>
+      {% else %}
+        <tr>
+          <td class="align-middle text-center" scope="row" colspan="9999">No data available!</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+  </table>
+</div>
+<b><p class="h5">Upcoming events and contests:</p></b>
+<hr class="blur close">
+<div class="mb-4">
+  <p><i>There are no scheduled events and contests which have been registered at the moment. Please check them up again at another time!</i></p>
+</div>
+<b><p class="h5">Past events and contests:</p></b>
+<hr class="blur close">
+<div class="mb-4">
+  <p><i>There are no past events and contests! May be the administrators are setting up a new event? Who knows (～￣▽￣)~</i></p>
+</div>
+{{ render_pagination(contests, "user_view.contest_list") }}
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="reload-contest-page-warning-toast" class="toast">
+    <div class="toast-header">
+      <strong class="me-auto">Force-reload</strong>
+      <small>Right now!</small>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body">
+      A contest has been updated, we need to reload this page in order to keep up with the latest data and information correctly. Don't worry though, your data won't lost or go anywhere!
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block additional_scripts %}
+{{ super() }}
+<script src="/static/js/contest_list.js"></script>
+{% endblock %}
