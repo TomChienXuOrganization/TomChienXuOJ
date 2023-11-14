@@ -2,6 +2,8 @@ import pytz
 import datetime
 import os
 import json
+import sys
+import traceback
 
 # Get all files in a directory
 def get_files(directory: str) -> list:
@@ -35,6 +37,8 @@ class TimezoneMixin:
   def convert_time_as_timezone(time):
     if isinstance(time, str):
       time = datetime.datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
+    elif isinstance(time, int):
+      time = datetime.datetime.fromtimestamp(time)
 
     target_tz = pytz.timezone("Asia/Ho_Chi_Minh")
     utc_offset = target_tz.utcoffset(time)
@@ -42,3 +46,12 @@ class TimezoneMixin:
     time = time.astimezone(pytz.timezone("UTC")) + utc_offset
 
     return time.astimezone(target_tz)
+
+def TomChienXuOJ_crash_exception_traceback_handler(__exception_type, __base_exception, __traceback_type):
+  """For security reasons, the TomChienXuOJ's developers have hidden the absolute paths pointing to the files where the exceptions occur."""
+
+  exception = traceback.TracebackException(__exception_type, __base_exception, __traceback_type)
+  for frame_summary in exception.stack:
+    frame_summary.filename = os.path.relpath(frame_summary.filename)
+
+  print("".join(exception.format()), file=sys.stderr)
