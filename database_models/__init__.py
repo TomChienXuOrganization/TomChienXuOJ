@@ -25,6 +25,7 @@ from .User import User
 from .User import UserProfile
 from .User import UserActivationStatus
 from .Announcement import Announcement
+from .FlatPage import FlatPage
 from .Judge import Judge
 from .Judge import ProgrammingLanguage
 from .Judge import Judge_ProgrammingLanguage
@@ -44,7 +45,9 @@ def first_time_initialization() -> None:
   checker = False
   modals = [
     Permission,
+    Announcement,
     Role,
+    FlatPage,
     ProblemCategory,
     ProblemJudgingType,
     ProgrammingLanguage,
@@ -67,6 +70,8 @@ def first_time_initialization() -> None:
 
     with database.engine.connect() as connection:
       connection.execute(Role_Permission.insert().values(role_id=2, permission_id=1))
+      connection.execute(Role_Permission.insert().values(role_id=2, permission_id=2))
+      connection.execute(Role_Permission.insert().values(role_id=2, permission_id=3))
       connection.commit()
 
 def every_time_initialization() -> None:

@@ -14,6 +14,7 @@ from flask_login import current_user
 from flask_login import login_required
 from email.message import EmailMessage
 from email.mime.text import MIMEText
+from sqlalchemy import asc
 from sqlalchemy import desc
 from sqlalchemy.sql import expression
 from werkzeug.security import generate_password_hash
@@ -29,6 +30,7 @@ from . import database
 from . import TomChienXuOJ_render_template as render_template
 from . import TomChienXuOJ_redirect as redirect
 from . import app
+from database_models import FlatPage
 from database_models import User
 from database_models import UserProfile
 from database_models import UserActivationStatus
@@ -46,6 +48,9 @@ from forms import UploadCaseForm
 from forms import UploadCustomChecker
 from uuid import uuid4
 from settings import MAX_NUMBER_OF_SUBMISSIONS_PER_USER
+from settings import MAX_NUMBER_OF_PROBLEMS_PER_PAGE
+from settings import MAX_NUMBER_OF_SUBMISSIONS_PER_PAGE
+from settings import MAX_NUMBER_OF_CONTESTS_PER_PAGE
 from settings import PROBLEM_TESTCASE_ROOT_STORAGE
 from settings import ACTIVATION_EMAIL_SENDER
 from settings import FULL_DOMAIN_WITH_SCHEME
@@ -63,6 +68,26 @@ main_blueprint = Blueprint("user_view", __name__)
 #   os.kill(os.getpid(), signal.SIGINT)
 #   return "Server is restarting..."
 
+@main_blueprint.route("/issues")
+def issue_list():
+  if not os.path.exists("issues.md"):
+    abort(404, "No issues to be found.")
+
+  with open("issues.md", "r", encoding="utf-8") as file:
+    return render_template("user/issue/list.html", issues=markdown.convert(file.read()))
+
+@main_blueprint.route("/flat/<string:custom_string_to_detect_with_regex>")
+def flat_page_view(custom_string_to_detect_with_regex):
+  with database.session.no_autoflush:
+    page = FlatPage.query.filter_by(page_code=custom_string_to_detect_with_regex).first()
+
+    if not page:
+      abort(404, f"No flat pages with the code {custom_string_to_detect_with_regex} to be found.")
+
+    page.content = markdown.convert(page.content)
+
+    return render_template("user/flat_page/flat_page.html", page=page)
+
 @main_blueprint.route("signup", methods=["GET", "POST"])
 def signup():
   def returner(reason: str = None, input_form = None) -> str:
@@ -71,6 +96,9 @@ def signup():
       failed_signup_authorization_reason=reason,
       form=input_form
     )
+
+  if not os.getenv("SECRET_KEY"):
+    abort(501, "The server did not contain the SECRET KEY. You (admins) should recheck the .env file.")
 
   if current_user.is_authenticated:
     return redirect(url_for("user_view.home"))
@@ -229,13 +257,13 @@ def judges():
 @main_blueprint.route("/problems/<int:page>")
 def problem_list(page = 1):
   if current_user.is_authenticated and current_user.profile.attending_contest_id:
-    problems = Problem.query.filter(Problem.problem_name.in_([problem.problem_name for problem in current_user.profile.contest.problem_set])).paginate(page=page)
+    problems = Problem.query.filter(Problem.problem_name.in_([problem.problem_name for problem in current_user.profile.contest.problem_set])).order_by(desc(Problem.date_of_publishing)).paginate(page=page)
   else:
     if current_user.is_authenticated and current_user.role.check("VIEW_PRIVATE_PROBLEMS"):
-      pagination = database.select(Problem)
+      pagination = database.select(Problem).order_by(desc(Problem.date_of_publishing))
     else:
-      pagination = database.select(Problem).where(Problem.visibility == 1)
-    problems = database.paginate(pagination, page=page, per_page=100)
+      pagination = database.select(Problem).order_by(desc(Problem.date_of_publishing)).where(Problem.visibility == 1)
+    problems = database.paginate(pagination, page=page, per_page=MAX_NUMBER_OF_PROBLEMS_PER_PAGE)
 
   return render_template("user/problem/list.html", problems=problems, endpoint="user_view.problem_list")
 
@@ -296,8 +324,8 @@ def problem_testcase_management(problem_code):
 
       files = get_files(f"{PROBLEM_TESTCASE_ROOT_STORAGE}/{problem_code}")
 
-      input_files = sorted(re.findall(r"(\d+)\.in", " ".join(files)), key=lambda x: int(x))
-      output_files = sorted(re.findall(r"(\d+)\.out", " ".join(files)), key=lambda x: int(x))
+      input_files = sorted(re.findall(r"(\d+)\.in", " ".join(files)), key=int)
+      output_files = sorted(re.findall(r"(\d+)\.out", " ".join(files)), key=int)
 
       problem_cases_new_data = {
         "allow_submitting": True,
@@ -321,7 +349,6 @@ def problem_testcase_management(problem_code):
       create_sub_path_if_not_exists(parent_folder_directory)
       if os.path.exists(os.path.join(parent_folder_directory, "data.json")):
         problem_cases_new_data = get_json_data(f"{PROBLEM_TESTCASE_ROOT_STORAGE}/{problem_code}/data.json")
-        print(custom_checker)
         problem_cases_new_data["custom_checker"] = custom_checker
         save_json_data(f"{PROBLEM_TESTCASE_ROOT_STORAGE}/{problem_code}/data.json", problem_cases_new_data)
 
@@ -377,14 +404,16 @@ def problem_submit(problem_code):
       form.language.data,
       form.code.data
     )
-    
+
+    problem = Problem.query.filter_by(problem_code=problem_code).first()
+
     new_submission = Submission(
       code = form.code.data,
       judge_id = Judge.query.filter_by(name=global_OJ_judge.name).first().id,
       judge_authentication = global_OJ_judge.authentication,
       submission_authentication = judge_process_authentication,
       author_id = current_user.id,
-      problem_id = Problem.query.filter_by(problem_code=problem_code).first().id,
+      problem_id = problem.id,
       programming_language_id = ProgrammingLanguage.query.filter_by(language_id=form.language.data).first().id,
       judging = 1
     )
@@ -393,7 +422,7 @@ def problem_submit(problem_code):
 
     def finish_judging_process(id):
       with app.app_context():
-        result = global_OJ_judge.execute_all_judging_process(judge_process_authentication)
+        result = global_OJ_judge.execute_all_judging_process(judge_process_authentication, problem.time_limit)
         submission = Submission.query.filter_by(id=id).first()
         submission.result = dumps(result, ensure_ascii=True)
         submission.judging = 0
@@ -422,14 +451,14 @@ def problem_submit(problem_code):
 @main_blueprint.route("/submissions", defaults={"page": 1})
 @main_blueprint.route("/submissions/<int:page>")
 def submission_list(page = 1):
-  submissions = database.paginate(database.select(Submission).order_by(desc(Submission.time)), page=page)
+  submissions = database.paginate(database.select(Submission).order_by(desc(Submission.time)), per_page=MAX_NUMBER_OF_SUBMISSIONS_PER_PAGE, page=page)
   return render_template("user/submission/list.html", submissions=submissions, endpoint="user_view.submission_list")
 
 @main_blueprint.route("/submissions/mine", defaults={"page": 1})
 @main_blueprint.route("/submissions/mine/<int:page>")
 @login_required
 def my_submission_list(page = 1):
-  submissions = database.paginate(database.select(Submission).where(Submission.author == current_user).order_by(desc(Submission.time)), page=page)
+  submissions = database.paginate(database.select(Submission).where(Submission.author == current_user).order_by(desc(Submission.time)), per_page=MAX_NUMBER_OF_SUBMISSIONS_PER_USER, page=page)
   return render_template("user/submission/list.html", submissions=submissions, endpoint="user_view.my_submission_list")
 
 @main_blueprint.route("/s/<int:submission_id>/rejudge", methods=["POST"])
@@ -456,7 +485,7 @@ def submission_rejudge(submission_id):
   def finish_judging_process(id):
     with app.app_context():
       submission = Submission.query.filter_by(id=id).first()
-      result = global_OJ_judge.execute_all_judging_process(judge_process_authentication)
+      result = global_OJ_judge.execute_all_judging_process(judge_process_authentication, submission.problem.time_limit)
       submission.result = dumps(result, ensure_ascii=True)
       submission.judging = 0
       database.session.commit()
@@ -506,7 +535,7 @@ def tournament_view(year = 2023):
 @main_blueprint.route("/contests", defaults={"page": 1})
 @main_blueprint.route("/contests/<int:page>")
 def contest_list(page = 1):
-  contests = database.paginate(database.select(Contest).order_by(desc(Contest.start_time)), page=page)
+  contests = database.paginate(database.select(Contest).order_by(desc(Contest.start_time)), per_page=MAX_NUMBER_OF_CONTESTS_PER_PAGE, page=page)
   return render_template("user/contest/list.html", contests=contests)
 
 @main_blueprint.route("/c/<string:contest_code>")

@@ -19,18 +19,27 @@
     <tbody>
       {% for judge, runtime in status.items() %}
       <tr>
-        <td scope="row" class="text-center border-top-0 judge-name">{{ judge["name"] }}</td>
+        <td scope="row" class="text-center border-top-0 judge-name">
+          <div class="d-flex justify-content-between px-3">
+            <div class="text-start">{{ judge.name }}</div>
+            <div>
+              {% if judge.description %}
+              <i class="bi bi-question-circle" data-bs-toggle="tooltip" data-bs-title="{{ judge.description | safe }}"></i>
+              {% endif %}
+            </div>
+          </div>
+        </td>
         <td scope="row" class="text-center border-top-0">{{ tick(judge["socket_supported"]) }}</td>
         <td scope="row" class="text-center border-top-0">{{ judge["authentication"] }}</td>
         {% for language in languages %}
         {% if language in runtime %}
           {% if runtime.get(language).status %}
-          <td class="text-center text-dark border-top-0 bg-success-subtle text-emphasis-success"><b>Working</b></td>
+          <td class="text-center text-dark border-top-0 bg-success-subtle text-emphasis-success" data-bs-toggle="tooltip" data-bs-html="true" data-bs-title="Have been online since: <br> {{ TimezoneMixin.convert_time_as_timezone(runtime.get(language).uptime_since) }}"><b>Working</b></td>
           {% else %}
-          <td class="text-center text-dark border-top-0 bg-danger-subtle text-emphasis-danger"><b>Disabled</b></td>
+          <td class="text-center text-dark border-top-0 bg-danger-subtle text-emphasis-danger" data-bs-toggle="tooltip" data-bs-title="Currently disabled"><b>Disabled</b></td>
           {% endif %}
         {% else %}
-        <td class="text-center text-dark border-top-0 bg-warning-subtle text-emphasis-warning"><b>Not Supported</b></td>
+        <td class="text-center text-dark border-top-0 bg-warning-subtle text-emphasis-warning" data-bs-toggle="tooltip" data-bs-title="No support available for this language"><b>Not Supported</b></td>
         {% endif %}
         {% endfor %}
       </tr>

@@ -47,17 +47,26 @@ function removeSample() {
 
 function generate() {
   let resultString = "";
+  let inputFile = document.querySelector("#input-file").value ? `: Data taken from <code>${document.querySelector("#input-file").value}</code>` : "";
+  let outputFile = document.querySelector("#output-file").value ? `: Data written in <code>${document.querySelector("#output-file").value}</code>` : "";
+  let constrains = document.querySelector("#limitations").value ? `
+<h4 class="section-title"><b>Limitations</b></h4>
+<hr class="close">
+
+${document.querySelector("#limitations").value}
+` : "";
+
   resultString = `${document.querySelector("#legend").value}
-<h4 class="section-title"><b>Input Specification</b></h4>
+<h4 class="section-title"><b>Input Specification${inputFile}</b></h4>
 <hr class="close">
 
 ${document.querySelector("#input-specification").value}
 
-<h4 class="section-title"><b>Output Specification</b></h4>
+<h4 class="section-title"><b>Output Specification${outputFile}</b></h4>
 <hr class="close">
 
 ${document.querySelector("#output-specification").value}
-
+${constrains}
 <h4 class="section-title"><b>Sample Case(s)</b></h4>
 <hr class="close">
 `;
@@ -67,11 +76,15 @@ ${document.querySelector("#output-specification").value}
     resultString += `<div class="row">
   <div class="col">
     <p class="h5">Input #${i}:</p>
-    ${document.querySelector(`#input-${i}`).value}
+    <div markdown="1">
+${document.querySelector(`#input-${i}`).value}
+    </div>
   </div>
   <div class="col">
     <p class="h5">Output #${i}:</p>
-    ${document.querySelector(`#output-${i}`).value}
+    <div markdown="1">
+${document.querySelector(`#output-${i}`).value}
+    </div>
   </div>
 </div>
 `;
@@ -79,6 +92,7 @@ ${document.querySelector("#output-specification").value}
     if (document.querySelector(`#explanation-${i}`).value) {
       resultString += `<p class="h5">Explanation:</p>
 ${document.querySelector(`#explanation-${i}`).value}
+
 `;
     }
 

@@ -31,13 +31,18 @@
         <b><span class="text-{{ banner_color[result.status_code] }}">Internal Error (IE)</span></b>
       {% endif %}
       <div class="collapse" id="batch_{{ parent_loop.index }}_{{ loop.index }}">
-        <div class="bd-callout bd-callout-{{ banner_color[result.status_code] }} mb-2">
+        <div class="callout callout-{{ banner_color[result.status_code] }} mb-2">
           <ul class="no-bullets">
             <li><b>Judge's feedback:</b> {{ result.feedback | safe }}</li>
             <li><b>Points received:</b> {{ result.point }}</li>
-            {% if result.standard_error_result %}
+            {% if result.standard_error_result and SHOW_STANDARD_ERROR %}
             <li><b>Standard error:</b>
               <pre><code>{{ result.standard_error_result | safe }}</code></pre>
+            </li>
+            {% endif %}
+            {% if result.return_result and SHOW_STANDARD_ERROR %}
+            <li><b>Returned result</b> (Output on <i>Standard Output Stream Line</i>)<b>:</b>
+              <pre><code>{{ result.return_result }}</code></pre>
             </li>
             {% endif %}
           </ul>

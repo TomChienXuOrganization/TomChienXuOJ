@@ -3,6 +3,7 @@
 {% from "helper/pagination.html" import render_pagination %}
 
 <!DOCTYPE html>
+<!-- <html lang="en" data-bs-theme="dark"> -->
 <html lang="en">
 
   <head>
@@ -69,11 +70,18 @@
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for('user_view.contest_list') }}"><b>CONTESTS</b></a>
             </li>
-            <li class="nav-item">
+            <!-- <li class="nav-item">
               <a class="nav-link" href="{{ url_for('user_view.tournament_list') }}"><b>TOURNAMENTS</b></a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('user_view.about') }}"><b>ABOUT</b></a>
+            </li> -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="{{ url_for('user_view.about') }}"><b>ABOUT</b></a>
+              <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="about-section-dropdown">
+                <li><a class="dropdown-item" href='{{ url_for("user_view.flat_page_view", custom_string_to_detect_with_regex="custom_checker") }}'>Custom Checker</a></li>
+                <li><a class="dropdown-item" href='{{ url_for("user_view.flat_page_view", custom_string_to_detect_with_regex="status_codes") }}'>Status Codes</a></li>
+                <li><a class="dropdown-item" href='{{ url_for("user_view.issue_list") }}'>Issues</a></li>
+                <li><a class="dropdown-item" href='{{ url_for("utility_view.problem_template_generator") }}'>Problem Template Generator</a></li>
+                <li><a class="dropdown-item" href='{{ url_for("utility_view.markdown_generator") }}'>Markdown Generator</a></li>
+              </ul>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for('user_view.judges') }}"><b>JUDGES</b></a>
@@ -108,7 +116,7 @@
     </nav>
 
     <div class="container-fluid px-md-5 my-3 position-relative main-body">{% block view_page_body %}{% endblock %}</div>
-    <!-- <div class="container my-3 position-relative main-body"></div> -->
+    <!-- <div class="container my-3 position-relative main-body">{#% block view_page_body %}{% endblock %#}</div> -->
 
     <footer class="bg-dark text-center text-lg-start">
       <div class="text-center p-3 sticky-top">
@@ -135,6 +143,8 @@
           delimiters: [
             { left: "$$", right: "$$", display: true },
             { left: "$", right: "$", display: false },
+            { left: "~~", right: "~~", display: true },
+            { left: "~", right: "~", display: false },
             { left: "\\(", right: "\\)", display: false },
             { left: "\\[", right: "\\]", display: true }
           ],

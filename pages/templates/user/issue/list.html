@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Issue List{% endblock %}
+
+{% block view_page_body %}
+{{ header("Issues") }}
+{{ issues | safe }}
+{% endblock %}

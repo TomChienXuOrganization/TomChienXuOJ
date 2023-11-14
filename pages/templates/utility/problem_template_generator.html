@@ -9,15 +9,27 @@
       {{ form.hidden_tag() }}
       <div class="mb-1">
         <b>{{ form.legend.label(for="legend") }}:</b>
-        {{ form.legend(class="form-control", id="legend", placeholder="Problem legend...", autofocus=True) }}
+        {{ form.legend(class="form-control", id="legend", placeholder="Problem legend...", autofocus=True, rows=15) }}
       </div>
       <div class="mb-1">
         <b>{{ form.input_specification.label(for="input-specification") }}:</b>
-        {{ form.input_specification(class="form-control", id="input-specification", placeholder="Input Specification...") }}
+        {{ form.input_specification(class="form-control", id="input-specification", placeholder="Input Specification...", rows=6) }}
+        <div class="my-1"> 
+          <b><label for="input-file">Input file:</label></b>
+          <input class="form-control" type="text" name="input-file" id="input-file">
+        </div>
       </div>
       <div class="mb-1">
         <b>{{ form.output_specification.label(for="output-specification") }}:</b>
-        {{ form.output_specification(class="form-control", id="output-specification", placeholder="Output Specification...") }}
+        {{ form.output_specification(class="form-control", id="output-specification", placeholder="Output Specification...", rows=6) }}
+        <div class="my-1"> 
+          <b><label for="output-file">Output file:</label></b>
+          <input class="form-control" type="text" name="output-file" id="output-file">
+        </div>
+      </div>
+      <div class="mb-1"> 
+        <b><label for="limitations">Limitations</label></b>
+        <textarea class="form-control" name="limitations" id="limitations"></textarea>
       </div>
       <b>Sample Case(s):</b>
       <div class="mb-3 form-group">

@@ -48,6 +48,9 @@ document.querySelectorAll("pre").forEach((element) => {
   element.parentElement.insertBefore(div, element);
 })
 
+const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+
 $(document).ready(() => {
   $("select.form-control").select2({
     theme: "bootstrap-5"

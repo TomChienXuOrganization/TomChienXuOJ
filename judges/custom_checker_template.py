@@ -39,14 +39,16 @@ def hnoj_graph1_custom_checker(process_output: str, judge_input: str, judge_outp
   return correct_answer
 
 def line_by_line_token_standard_checker(process_output, judge_input, judge_output, accepted_point, time, memory):
-  judge_output = judge_output.rstrip("\r\n").split("\n")
-  process_output = process_output.rstrip("\r\n").split("\n")
+  original_output = process_output
+
+  judge_output = judge_output.rstrip("\r\n").split("\n") if judge_output else None
+  process_output = process_output.rstrip("\r\n").split("\n") if process_output else None
 
   if len(judge_output) != len(process_output):
-    return JudgeResult(False, process_output, "WA", time, memory, "", 0, "Wrongly tokenized! Your output length (line-by-line) does not match ours!")
+    return JudgeResult(False, original_output, "WA", time, memory, "", 0, "Wrongly tokenized! Your output length (line-by-line) does not match ours!")
 
   for index in range(len(judge_output)):
     if judge_output[index] != process_output[index]:
-      return JudgeResult(False, process_output, "WA", time, memory, "", 0, f"Wrongly comparison on the <b>{ordinal(index + 1)}</b> token!")
+      return JudgeResult(False, original_output, "WA", time, memory, "", 0, f"Wrongly comparison on the <b>{ordinal(index + 1)}</b> token!")
 
-  return JudgeResult(True, process_output, "AC", time, memory, "", accepted_point, f"Correct answers. <b>{len(judge_output)}</b> token(s) has been returned!")
+  return JudgeResult(True, original_output, "AC", time, memory, "", accepted_point, f"Correct answers. <b>{len(judge_output)}</b> token(s) has been returned!")

@@ -15,9 +15,14 @@
         <a href="{{ url_for('user_view.home', id=announcement.id) }}" class="link text-decoration-none text-break">
           <span class="h4">{{ announcement.title }}</span>
         </a>
-        <div>
-          <span>Posted by {{ announcement.author.render_display | safe }}, at <b>{{ announcement.time_timezone }}</b>.</span>
-          <p class="text-danger">{% if not announcement.visibility %}*This announcement is not publicly published!{% endif %}</p>
+        <div class="d-flex justify-content-between">
+          <div>
+            <span>Posted by {{ announcement.author.render_display | safe }}, at <b>{{ announcement.time_timezone }}</b>.</span>
+            <p class="text-danger">{% if not announcement.visibility %}*This announcement is not publicly published!{% endif %}</p>
+          </div>
+          {% if current_user.is_authenticated and current_user.role.check("ADMIN") %}
+          <span>[<a href="{{ url_for('announcement.edit_view', id=announcement.id) }}">Edit</a>]</span>
+          {% endif %}
         </div>
         <p class="mb-0 card-text">
           <html>

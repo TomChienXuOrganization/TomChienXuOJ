@@ -71,12 +71,17 @@ class AdminView_ProblemJudgingType(TomChienXuModelView):
 class AdminView_ProblemType(TomChienXuModelView):
   pass
 
+class AdminView_FlatPage(TomChienXuModelView):
+  column_exclude_list = ["content"]
+
 class AdminView_Problem(TomChienXuModelView):
-  column_exclude_list = ["language_specific_resource_limits", "problem_legend", "problem_input", "problem_output", "problem_example", "problem_clarification", "problem_editorial", "problem_source"]
+  column_exclude_list = ["language_specific_resource_limits", "problem_legend", "problem_editorial"]
   column_default_sort = ("date_of_publishing", True)
 
 class AdminView_Contest(TomChienXuModelView):
-  ...
+  # column_include_list = ["contest_code", "contest_name", "visibility", "scoreboard_visibility", "run_pretests_only", "start_time", "end_time", "moss", "author"]
+  column_exclude_list = ["scoreboard_visibility", "allow_comments", "allow_problem_tags", "run_pretests_only", "number_of_precision_digit", "time_limitation", "description", "access_code"]
+  column_default_sort = ("start_time", True)
 
 class AdminView_Submission(TomChienXuModelView):
   column_exclude_list = ["code", "result", "judge_authentication"]
@@ -93,6 +98,7 @@ admin.add_view(AdminView_ProgrammingLanguage(database_models.ProgrammingLanguage
 admin.add_view(AdminView_ProblemCategory(database_models.ProblemCategory, database.session))
 admin.add_view(AdminView_ProblemJudgingType(database_models.ProblemJudgingType, database.session))
 admin.add_view(AdminView_ProblemType(database_models.ProblemType, database.session))
+admin.add_view(AdminView_FlatPage(database_models.FlatPage, database.session))
 admin.add_view(AdminView_Problem(database_models.Problem, database.session))
 admin.add_view(AdminView_Contest(database_models.Contest, database.session))
 admin.add_view(AdminView_Submission(database_models.Submission, database.session))

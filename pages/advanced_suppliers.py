@@ -7,10 +7,12 @@ from flask_login import current_user
 from flask_admin import expose
 from flask_admin import BaseView
 from flask_admin import AdminIndexView
+from settings import SHOW_STANDARD_ERROR
 from helpers import TimezoneMixin
 
 default_keyword_arguments = {
   "user": current_user,
+  "SHOW_STANDARD_ERROR": SHOW_STANDARD_ERROR,
   "TimezoneMixin": TimezoneMixin
 }
 

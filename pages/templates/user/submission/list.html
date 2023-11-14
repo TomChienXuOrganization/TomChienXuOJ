@@ -12,54 +12,65 @@
   <table class="table-sm table table-hover table-bordered">
     <tbody>
       {% for submission in submissions %}
-        <tr>
-          {% if submission.judging %}
-          <td class="text-nowrap text-center col-auto bg-secondary-subtle text-secondary-emphasis" style="white-space: nowrap!important;">
+      <tr>
+        {% if submission.judging %}
+        <td class="text-nowrap text-center col-auto bg-secondary-subtle text-secondary-emphasis" style="white-space: nowrap!important;">
+          <div>
+            <span class="h5">Pending</span>
+          </div>
+          <div class="px-2">
+            <small><b>Judging</b>, {{ submission.programming_language.language_full_name }}</small>
+          </div>
+        </td>
+        {% else %}
+        <td class="text-nowrap text-center col-auto bg-{{ banner_color[submission.status] }}-subtle text-{{ banner_color[submission.status] }}-emphasis" style="white-space: nowrap!important;">
+          <div>
+            <span class="h5">{{ submission.correct_count }} / {{ submission.all_test_count }}</span>
+          </div>
+          <div class="px-2">
+            <small><b>{{ submission.status }}</b>, {{ submission.programming_language.language_full_name }}</small>
+          </div>
+        </td>
+        {% endif %}
+        <td class="px-3 col-11 align-middle">
+          <div class="d-flex justify-content-between">
             <div>
-              <span class="h5">Pending</span>
-            </div>
-            <div class="px-2">
-              <small><b>Judging</b>, {{ submission.programming_language.language_full_name }}</small>
-            </div>
-          </td>
-          {% else %}
-          <td class="text-nowrap text-center col-auto bg-{{ banner_color[submission.status] }}-subtle text-{{ banner_color[submission.status] }}-emphasis" style="white-space: nowrap!important;">
-            <div>
-              <span class="h5">{{ submission.correct_count }} / {{ submission.all_test_count }}</span>
-            </div>
-            <div class="px-2">
-              <small><b>{{ submission.status }}</b>, {{ submission.programming_language.language_full_name }}</small>
-            </div>
-          </td>
-          {% endif %}
-          <td class="px-3 col-11 align-middle">
-            <div class="d-flex justify-content-between">
               <div>
-                <div>
-                  <a class="fs-5" href="{{ url_for('user_view.problem_view', problem_code=submission.problem.problem_code) }}"><b>{{ submission.problem.problem_name }}</b></a>
-                </div>
-                <div>
-                  By {{ submission.author.render_display | safe }}, <span class="time-from-now" since="{{ submission.time_timezone }}"></span>
-                </div>
+                <a class="fs-5" href="{{ url_for('user_view.problem_view', problem_code=submission.problem.problem_code) }}"><b>{{ submission.problem.problem_name }}</b></a>
               </div>
-              <div class="align-self-center">
-                <a href="{{ url_for('user_view.submission_view', submission_id=submission.id) }}">View</a>
-                •
-                <a href="{{ url_for('submission.edit_view', id=submission.id) }}">Admin</a>
-                •
-                <a href="#rejudge" class="rejudge" submission="{{ submission.id }}">Rejudge</a>
+              <div>
+                By {{ submission.author.render_display | safe }}, <span class="time-from-now" since="{{ submission.time_timezone }}"></span>
               </div>
             </div>
-          </td>
-          <td class="text-nowrap text-center col-auto bg-{{ banner_color[submission.status] }}-subtle text-{{ banner_color[submission.status] }}-emphasis" style="white-space: nowrap!important;">
-            <div>
-              <span class="h5">{{ submission.resources_used[0] }}s</span>
+            <div class="align-self-center">
+              <a href="{{ url_for('user_view.submission_view', submission_id=submission.id) }}">View</a>
+              •
+              <a href="{{ url_for('submission.edit_view', id=submission.id) }}">Admin</a>
+              •
+              <a href="#rejudge" class="rejudge" submission="{{ submission.id }}">Rejudge</a>
             </div>
-            <div class="px-2">
-              {{ submission.resources_used[1] }} Mb
-            </div>
-          </td>
-        </tr>
+          </div>
+        </td>
+        {% if submission.judging %}
+        <td class="text-nowrap text-center col-auto bg-secondary-subtle text-secondary-emphasis" style="white-space: nowrap!important;">
+          <div>
+            <span class="h5">Pending</span>
+          </div>
+          <div class="px-2">
+            <small><b>TBD...</b></small>
+          </div>
+        </td>
+        {% else %}
+        <td class="text-nowrap text-center col-auto bg-{{ banner_color[submission.status] }}-subtle text-{{ banner_color[submission.status] }}-emphasis" style="white-space: nowrap!important;">
+          <div>
+            <span class="h5">{{ submission.resources_used[0] }}s</span>
+          </div>
+          <div class="px-2">
+            {{ submission.resources_used[1] }} Mb
+          </div>
+        </td>
+        {% endif %}
+      </tr>
       {% endfor %}
     </tbody>
   </table>

@@ -31,7 +31,7 @@ admin = flask_admin.Admin(app, name="TomChienXuOJ", index_view=TomChienXuAdminIn
 login_manager.login_view = "user_view.login"
 
 from tomchienxu_markdown.markdown import TomChienXuOJMarkdown
-markdown = TomChienXuOJMarkdown(extras=["break-on-newline", "code-friendly", "fenced-code-blocks", "footnotes", "spoiler", "strike"])
+markdown = TomChienXuOJMarkdown()
 
 from .socket_suppliers import *
 
@@ -63,6 +63,10 @@ first_request = True
 @app.before_request
 def run_after_app_created():
   global first_request
+
+  if flask.request.host not in ALLOWED_HOST:
+    return "This is not a registered Base Domain!"
+
   if not first_request:
     return
 

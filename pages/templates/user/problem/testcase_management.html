@@ -237,7 +237,9 @@
   <div id="editor">{{ custom_checker }}</div>
   <form class="input-group" method="POST" id="custom-checker-form">
     {{ upload_custom_checker_form.hidden_tag() }}
-    <button class="btn btn-outline-success" id="submit-custom-checker-button">Upload Custom Checker</button>
+    <div class="mt-2 d-flex justify-content-end">
+      <button class="btn btn-outline-success" id="submit-custom-checker-button">Upload Custom Checker</button>
+    </div>
   </form>
 </div>
 {% endblock %}

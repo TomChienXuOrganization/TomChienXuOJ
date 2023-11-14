@@ -13,6 +13,7 @@ class User(UserMixin, database.Model):
 
   profile = database.relationship("UserProfile", backref="user", uselist=False)
   announcement = database.relationship("Announcement", backref="author")
+  flat_page = database.relationship("FlatPage", backref="author")
   problem = database.relationship("Problem", backref="author")
   submission = database.relationship("Submission", backref="author")
   activation_status = database.relationship("UserActivationStatus", backref="user")

@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
       let timeBarPercentage = (currentTime - contestBeginTime) * 100 / (contestEndTime - contestBeginTime);
       timeBarPercentage = timeBarPercentage > 100 || timeBarPercentage < 0 ? 100 : timeBarPercentage;
       document.querySelector("#time-bar").style.width = `${timeBarPercentage}%`;
-    }, 1)
+    }, 50)
 
     let interval = setInterval(() => {
       let currentTime = new Date();

@@ -1,4 +1,4 @@
-.bd-callout {
+.callout {
   padding: 1.25rem;
   /* margin-top: 1.25rem;
   margin-bottom: 1.25rem; */
@@ -8,67 +8,67 @@
   background-color: white;
 }
 
-.bd-callout h4 {
+.callout h4 {
   margin-top: 0;
   margin-bottom: 0.25rem;
 }
 
-.bd-callout p:last-child {
+.callout p:last-child {
   margin-bottom: 0;
 }
 
-.bd-callout code {
+.callout code {
   border-radius: 0.25rem;
 }
 
-.bd-callout + .bd-callout {
+.callout + .callout {
   margin-top: -0.25rem;
 }
 
-.bd-callout-info {
+.callout-info {
   border-left-color: #5bc0de;
 }
 
-.bd-callout-info h4 {
+.callout-info h4 {
   color: #5bc0de;
 }
 
-.bd-callout-warning {
+.callout-warning {
   border-left-color: #f0ad4e;
 }
 
-.bd-callout-warning h4 {
+.callout-warning h4 {
   color: #f0ad4e;
 }
 
-.bd-callout-danger {
+.callout-danger {
   border-left-color: #d9534f;
 }
 
-.bd-callout-danger h4 {
+.callout-danger h4 {
   color: #d9534f;
 }
 
-.bd-callout-primary {
+.callout-primary {
   border-left-color: #007bff;
 }
 
-.bd-callout-primary h4 {
+.callout-primary h4 {
   color: #007bff;
 }
 
-.bd-callout-success {
+.callout-success {
   border-left-color: #28a745;
 }
 
-.bd-callout-success h4 {
+.callout-success h4 {
   color: #28a745;
 }
 
-.bd-callout-default {
+.callout-default {
   border-left-color: #6c757d;
 }
 
-.bd-callout-default h4 {
+.callout-default h4 {
   color: #6c757d;
 }

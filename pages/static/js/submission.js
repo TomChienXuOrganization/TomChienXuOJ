@@ -50,7 +50,7 @@ socket.on("receiving_judge_feedback_from_server", (data) => {
         <b>Case #${j + 1}:</b>
         <b><span class="text-${banner_color[data[i][j].status_code]}">${status_code[data[i][j].status_code]} (${data[i][j].status_code})</span></b> [${(data[i][j].time).toFixed(2)}s; ${(data[i][j].memory).toFixed(2)} MB]
         <div class="collapse" id="batch_${i + 1}_${j + 1}">
-          <div class="bd-callout bd-callout-${banner_color[data[i][j]["status_code"]]} mb-2">
+          <div class="callout callout-${banner_color[data[i][j]["status_code"]]} mb-2">
             <ul class="no-bullets">
               <li><b>Judge's feedback:</b> ${data[i][j]["feedback"]}</li>
               <li><b>Points received:</b> ${data[i][j]["point"]}</li>

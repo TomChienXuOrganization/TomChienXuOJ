@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from helpers import get_json_data
+from helpers import TomChienXuOJ_crash_exception_traceback_handler
 from languages.base import CompilingExecutor
 from .judge_result import JudgeResult
 from typing import *
@@ -41,15 +42,6 @@ class TomChienXuOJThread(threading.Thread):
   def join(self, *args, **kwargs) -> Any:
     threading.Thread.join(self, *args, **kwargs)
     return self._return
-
-def TomChienXuOJ_crash_exception_traceback_handler(__exception_type, __base_exception, __traceback_type) -> None:
-  """For security reasons, the TomChienXuOJ's developers have hidden the absolute paths pointing to the files where the exceptions occur."""
-
-  exception = traceback.TracebackException(__exception_type, __base_exception, __traceback_type)
-  for frame_summary in exception.stack:
-    frame_summary.filename = os.path.relpath(frame_summary.filename)
-
-  print("".join(exception.format()), file=sys.stderr)
 
 sys.excepthook = TomChienXuOJ_crash_exception_traceback_handler
 
@@ -103,10 +95,15 @@ class JudgeProcess:
       stdin=subprocess.PIPE,
       stdout=subprocess.PIPE,
       stderr=subprocess.PIPE,
+      encoding="utf-8",
       universal_newlines=True,
       shell=True
     ) as compiling_process:
-      output, error = [item.replace("\r\n", "\n").strip("\n") for item in compiling_process.communicate()]
+      try:
+        process_output = compiling_process.communicate()
+        output, error = [item.replace("\r\n", "\n").strip("\n") for item in process_output]
+      except:
+        output = error = None
 
       logger.info(f"Compile time: {time.perf_counter() - start}s")
       if compiling_process.returncode != 0:
@@ -129,32 +126,39 @@ class JudgeProcess:
       stdin=subprocess.PIPE,
       stdout=subprocess.PIPE,
       stderr=subprocess.PIPE,
+      encoding="utf-8",
       universal_newlines=True,
       cwd=self.judge_folder.name,
       shell=True
     ) as process:
       try:
         def judge():
-          # process.stdin.write(judge_input)
-          # process.stdin.flush()
           try:
             memory = psutil.Process(process.pid).memory_info().rss / (1024 * 1024)
           except psutil.NoSuchProcess:
             memory = 1
 
           start = time.perf_counter()
+          # process.stdin.write(judge_input.encode("utf-8").decode())
+          # process.stdin.flush()
+          # process.stdin.close()
+          # process_output_data = process.communicate()
           process_output_data = process.communicate(input=judge_input)
           delta_time = time.perf_counter() - start
 
-          output, error = [item.replace("\r\n", "\n").strip("\n") for item in process_output_data]
+          returned_data = [item.replace("\r\n", "\n").strip("\n") for item in process_output_data if isinstance(item, str)]
+          try:
+            output, error = returned_data
+          except:
+            output = error = None
 
           if error:
             return JudgeResult(False, output, "IR", delta_time, 9999, error, 0, "You: (╯°□°）╯︵ ┻━┻ | It's ok my man, you can do it! Try again! ( ´･･)ﾉ(._.`)")
 
           try:
-            return self.checker(output, judge_input, judge_output, accepted_point, delta_time, memory)
+            return self.checker(output.strip(), judge_input.strip() if judge_input else None, judge_output.strip() if judge_output else None, accepted_point, delta_time, memory)
           except Exception as error:
-            return JudgeResult(False, output, "IR", delta_time, 9999, "\n".join(traceback.format_exception(error)), 0, "Aight, what's wrong?")
+            return JudgeResult(False, output, "IE", delta_time, 9999, "\n".join(traceback.format_exception(error)), 0, "Aight, what's wrong? You're not taking responsible for this tho, don't worry, it'll be fixed (or not).")
 
         communication_thread = TomChienXuOJThread(target=judge)
         communication_thread.start()
@@ -175,7 +179,7 @@ class JudgeProcess:
         return return_data
 
       except Exception as error:
-        return JudgeResult(False, "Unidentified Exception", "IR", 9999, 9999, "\n".join(traceback.format_exception(error)), 0, "(This can be judge's exception, may be not yours! You can create a ticket to be able to view this submission) We actually don't know why this happened tho! ¯\_(ツ)_/¯")
+        return JudgeResult(False, "Unidentified Exception", "IR", 9999, 9999, "\n".join(traceback.format_exception(error)), 0, r"(This can be judge's exception, may be not yours! You can create a ticket to be able to view this submission) We actually don't know why this happened tho! ¯\_(ツ)_/¯")
 
   def single_judge(self, input_file_name: str, output_file_name: str, accepted_point: Union[float, int] = 0.1, timeout: Union[float, int] = 1.0) -> JudgeResult:
     if input_file_name:
@@ -207,7 +211,7 @@ class Judge:
     self.description: str = description
     self.socket_supported: bool = socket_supported
     self.authentication: str = authentication or str(uuid.uuid4())
-    self.default_checker: Callable = line_by_line_token_standard_checker # default_checker
+    self.default_checker: Callable = default_checker
     self.judge_processes: Dict[str, JudgeProcess] = {}
     self.running: bool = False
     self.languages: List[str] = languages
@@ -220,7 +224,7 @@ class Judge:
         status = language_package.command in BYPASSED_DEFAULT_CMD_COMMANDS or shutil.which(language_package.command)
         self.language_statuses[language] = {
           "status": True,
-          "uptime_since": int(datetime.datetime.now().timestamp()),
+          "uptime_since": int(datetime.datetime.utcnow().timestamp()),
           "display_name": language_package.language_full_name
         } if status else {
           "status": False,
@@ -228,13 +232,14 @@ class Judge:
           "display_name": language_package.language_full_name
         }
 
-        logger.info(f"Judge '{name}': Started {'un' if not status else ''}successfully '{language}'.")
+        logger_switcher = logger.info if status else logger.error
+        logger_switcher(f"Judge '{name}': Started {'un' if not status else ''}successfully '{language}'.")
 
   def start(self) -> bool:
     self.running = True
     if self.socket_supported:
       self.socketio = socketio.Client(ssl_verify=SSL_VERIFY)
-      self.socketio.connect(FULL_DOMAIN_WITH_SCHEME, wait_timeout=10)
+      self.socketio.connect(FULL_DOMAIN_WITH_SCHEME, wait_timeout=10, namespaces=["/"])
       logger.info(f"Judge '{self.name}': SocketIO server started successfully.")
     logger.info(f"Judge '{self.name}': Started successfully.")
     return self.running
@@ -291,13 +296,13 @@ class Judge:
     judge_data = problem_data.get("cases")
 
     custom_checker = None
-    if problem_data.get("custom_checker"):
+    if custom_checker_template := problem_data.get("custom_checker"):
       temporary_directory = tempfile.TemporaryDirectory(prefix="TomChienXuOJQualified_", suffix=f"_CustomChecker_{problem_code}")
       with open(f"{JUDGE_SERVER_ROOT_STORAGE}/judge_result.py", "r", encoding="utf-8") as file:
         judge_result_header = file.read()
 
       with open(f"{temporary_directory.name}/custom_checker.py", "w", encoding="utf-8") as file:
-        file.write(judge_result_header + "\n" + problem_data["custom_checker"])
+        file.write(judge_result_header + "\n" + custom_checker_template)
 
       try:
         spec = importlib.util.spec_from_file_location("custom_checker", f"{temporary_directory.name}/custom_checker.py")
@@ -305,7 +310,7 @@ class Judge:
         spec.loader.exec_module(module)
         custom_checker = module.check
       except:
-        logging.warning(f"Custom checker of problem '{problem_code}' couldn't be loaded! Traceback to default checker.")
+        logger.warning(f"Custom checker of problem '{problem_code}' couldn't be loaded! Traceback to default checker.")
 
     if SAFE_FIRST_START_AFTER_COMPILING:
       self.execute_single_judging_process(judge_process_authentication, judge_data[0][0].get("input_file"), judge_data[0][0].get("output_file"), judge_data[0][0].get("point"), timeout, custom_checker)
@@ -313,12 +318,15 @@ class Judge:
     for batch in judge_data:
       batch_data = []
       for case in batch:
-        judge_process = self.execute_single_judging_process(judge_process_authentication, case.get("input_file"), case.get("output_file"), case.get("point"), timeout, custom_checker)
-        batch_data.append(judge_process.data)
+        judge_process = self.execute_single_judging_process(judge_process_authentication, case.get("input_file"), case.get("output_file"), case.get("point"), timeout)
+        batch_data.append(judge_process.data if judge_process else JudgeResult(False, "", "IE", 0, 0, "Unidentified.", 0, "The judge has encountered some issues :( Your submission will be reviewed by the admins and authors of the problem."))
 
         logger.info((judge_process.accepted_or_not, judge_process.status_code, judge_process.time, judge_process.memory, judge_process.point, judge_process.feedback))
         if self.socket_supported:
-          self.socketio.emit("receiving_judge_feedback_from_judge", (judge_process_authentication, return_data + [batch_data]))
+          try:
+            self.socketio.emit("receiving_judge_feedback_from_judge", (judge_process_authentication, return_data + [batch_data]))
+          except:
+            logger.warning("SocketIO server didn't response in time :(")
 
       return_data.append(batch_data)
 

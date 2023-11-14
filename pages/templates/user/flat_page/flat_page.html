@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ page.title }}{% endblock %}
+
+{% block view_page_body %}
+<h2 class="mb-1">{{ page.title | safe }}</h2>
+<div class="mb-2">
+  <div class="d-flex justify-content-between">
+    <span>Published and posted by {{ page.author.render_display | safe }}, at <b>{{ page.time_timezone }}</b>.</span>
+    {% if current_user.is_authenticated and current_user.role.check("ADMIN") %}
+    <span>[<a href="{{ url_for('flatpage.edit_view', id=page.id) }}">Edit</a>]</span>
+    {% endif %}
+  </div>
+  {% if not page.visibility %}<span class="text-danger">*This page is not publicly published!</span>{% endif %}
+</div>
+<hr class="close">
+
+{{ page.content | safe }}
+{% endblock %}
